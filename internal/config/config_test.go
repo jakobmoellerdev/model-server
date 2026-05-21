@@ -76,7 +76,7 @@ ocm:
 }
 
 func TestLoad_EnvExpansion_Missing(t *testing.T) {
-	os.Unsetenv("MISSING_VAR")
+	t.Setenv("MISSING_VAR", "") // ensure unset for this test
 	path := writeConfig(t, `
 server:
   listen: ":8080"

@@ -1,0 +1,19 @@
+version: "2"
+
+linters:
+  settings:
+    errcheck:
+      # these are intentionally unchecked: write-to-client errors and deferred close in tests
+      exclude-functions:
+        - (*encoding/json.Encoder).Encode
+        - (io.Writer).Write
+        - (net/http.ResponseWriter).Write
+        - (io.ReadCloser).Close
+        - (io.Closer).Close
+
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused

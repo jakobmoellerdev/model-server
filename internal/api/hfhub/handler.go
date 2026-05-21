@@ -118,7 +118,7 @@ func downloadFile(reg registry.ModelRegistry) http.HandlerFunc {
 			jsonError(w, statusFor(err), err)
 			return
 		}
-		defer rc.Close()
+		defer rc.Close() //nolint:errcheck
 
 		// Find file digest for ETag.
 		var fileDigest string

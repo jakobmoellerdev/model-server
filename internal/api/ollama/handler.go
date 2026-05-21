@@ -95,7 +95,7 @@ func pull(reg registry.ModelRegistry) http.HandlerFunc {
 				return
 			}
 			written, _ := io.Copy(io.Discard, rc)
-			rc.Close()
+			rc.Close() //nolint:errcheck
 
 			emit(PullEvent{
 				Status: "pulling " + f.Digest, Digest: f.Digest,
