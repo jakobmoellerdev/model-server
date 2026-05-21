@@ -186,6 +186,8 @@ ollama pull meta-llama/Llama-3-8B
 ```bash
 BASE=http://localhost:8080
 
+# --- Hugging Face Hub ---
+
 # List models
 curl $BASE/api/models | jq '.[].id'
 
@@ -201,14 +203,46 @@ curl $BASE/api/models/meta-llama/Llama-3-8B/tree/main | jq '.[].path'
 # Download a file
 curl -L $BASE/meta-llama/Llama-3-8B/resolve/main/config.json
 
-# Ollama: list models
+# --- Ollama ---
+
+# List models
 curl $BASE/api/tags | jq '.models[].name'
 
-# Ollama: show model details
+# Show model details
 curl -X POST $BASE/api/show -d '{"name":"meta-llama/Llama-3-8B"}' | jq .
 
-# Ollama: stream pull progress
+# Stream pull progress
 curl -X POST $BASE/api/pull -d '{"name":"meta-llama/Llama-3-8B"}'
+
+# --- OpenAI ---
+
+# List models
+curl $BASE/v1/models | jq '.data[].id'
+
+# Get a specific model
+curl $BASE/v1/models/meta-llama/Llama-3-8B | jq '{id, owned_by, created}'
+
+# --- MLflow Model Registry ---
+
+# Search registered models
+curl "$BASE/api/2.0/mlflow/registered-models/search" | jq '.registered_models[].name'
+
+# Get a registered model
+curl "$BASE/api/2.0/mlflow/registered-models/get?name=meta-llama/Llama-3-8B" | jq .registered_model
+
+# Search model versions
+curl "$BASE/api/2.0/mlflow/model-versions/search" | jq '.model_versions[] | {name, version, status}'
+
+# Get a specific version
+curl "$BASE/api/2.0/mlflow/model-versions/get?name=meta-llama/Llama-3-8B&version=1" | jq .model_version
+
+# Get download URI
+curl "$BASE/api/2.0/mlflow/model-versions/get-download-uri?name=meta-llama/Llama-3-8B&version=1" | jq .artifact_uri
+
+# --- Health ---
+
+curl $BASE/healthz
+curl $BASE/readyz
 ```
 
 ### OpenAI Python SDK
@@ -296,6 +330,7 @@ print(uri)
 |---|---|---|
 | `GET` | `/healthz` | Liveness probe |
 | `GET` | `/readyz` | Readiness probe (index built) |
+| `GET` | `/metrics` | Prometheus metrics |
 
 ---
 
