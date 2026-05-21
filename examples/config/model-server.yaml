@@ -1,0 +1,40 @@
+server:
+  listen: ":8080"
+  readTimeout: 30s
+  writeTimeout: 0s          # 0 = no limit (needed for large model downloads)
+  idleTimeout: 120s
+  shutdownTimeout: 30s
+
+auth:
+  mode: none                # none | bearer
+  # tokensFile: /etc/model-server/tokens
+
+ocm:
+  repositories:
+    - name: primary
+      type: OCIRegistry
+      url: ghcr.io/example/models
+      credentialsRef: ghcr-creds
+
+  blobCache:
+    path: /var/cache/model-server
+    maxSizeBytes: 107374182400  # 100 GiB
+    ttl: 168h
+
+  signatures:
+    required: false           # set true in production
+    trustedKeys: []
+
+  refreshInterval: 5m
+  indexTTL: 60s
+
+apis:
+  hfhub:
+    enabled: true
+  ollama:
+    enabled: true
+
+credentials:
+  ghcr-creds:
+    username: ${GHCR_USERNAME}
+    password: ${GHCR_TOKEN}   # always use env vars, never inline secrets

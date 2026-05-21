@@ -1,0 +1,64 @@
+components:
+  - name: github.com/meta/llama-3-8b-instruct
+    version: 1.0.0
+    provider:
+      name: meta
+    labels:
+      - name: ai.modelserver.io/model-id
+        value: "meta-llama/Llama-3-8B-Instruct"
+      - name: ai.modelserver.io/task
+        value: "text-generation"
+      - name: ai.modelserver.io/library
+        value: "transformers"
+      - name: ai.modelserver.io/family
+        value: "llama"
+      - name: ai.modelserver.io/license
+        value: "llama3"
+    resources:
+      - name: weights
+        type: modelWeights
+        relation: external
+        access:
+          type: ociBlob
+          # Replace sha256 with actual digest of your model weights OCI artifact
+          imageReference: ghcr.io/meta/llama-3-8b@sha256:0000000000000000000000000000000000000000000000000000000000000000
+        labels:
+          - name: ai.modelserver.io/filename
+            value: "model.safetensors"
+          - name: ai.modelserver.io/format
+            value: "safetensors"
+          - name: ai.modelserver.io/lfs
+            value: "true"
+
+      - name: config
+        type: modelConfig
+        relation: local
+        access:
+          type: localBlob
+          localReference: "sha256:config-digest-placeholder"
+          mediaType: "application/json"
+        labels:
+          - name: ai.modelserver.io/filename
+            value: "config.json"
+
+      - name: tokenizer
+        type: tokenizer
+        relation: local
+        access:
+          type: localBlob
+          localReference: "sha256:tokenizer-digest-placeholder"
+          mediaType: "application/json"
+        labels:
+          - name: ai.modelserver.io/filename
+            value: "tokenizer.json"
+
+      - name: model-card
+        type: modelCard
+        relation: local
+        access:
+          type: localBlob
+          localReference: "sha256:readme-digest-placeholder"
+          mediaType: "text/markdown"
+        labels:
+          - name: ai.modelserver.io/filename
+            value: "README.md"
