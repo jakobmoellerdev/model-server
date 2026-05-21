@@ -55,7 +55,8 @@ print()
 # 4. File tree
 print(f"--- list_repo_tree({MODEL_ID!r}) ---")
 for entry in api.list_repo_tree(MODEL_ID):
-    print(f"  {entry.path}  type={entry.type}")
+    kind = getattr(entry, "type", type(entry).__name__)
+    print(f"  {entry.path}  type={kind}")
 print()
 
 # 5. Download a single file

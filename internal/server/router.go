@@ -32,8 +32,12 @@ func NewRouter(cfg *config.Config, reg registry.ModelRegistry) http.Handler {
 	}
 
 	r.Get("/healthz", health.Liveness)
+	r.Head("/healthz", health.Liveness)
 	r.Get("/readyz", health.Readiness(reg))
 	r.Handle("/metrics", promhttp.Handler())
+
+	// HEAD / — used by ollama CLI as a connectivity probe
+	r.Head("/", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 
 	if cfg.APIs.HFHub.Enabled {
 		hfhub.MountRoutes(r, reg)

@@ -14,7 +14,7 @@ set -euo pipefail
 
 BASE="${MODEL_SERVER_URL:-http://localhost:8080}"
 MODEL="${MODEL_ID:-example-org/tiny-model}"
-VERSION="${MODEL_VERSION:-1}"
+VERSION="${MODEL_VERSION:-1.0.0}"
 
 # Derive owner/name
 OWNER="${MODEL%%/*}"

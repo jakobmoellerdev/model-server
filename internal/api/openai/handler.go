@@ -3,6 +3,7 @@ package openai
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -46,11 +47,16 @@ func getModel(reg registry.ModelRegistry) http.HandlerFunc {
 
 // resolveModelID reconstructs the model ID from URL params, supporting both
 // /v1/models/{model} (single segment) and /v1/models/{owner}/{model} (two segments).
+// Single-segment form also accepts URL-encoded slashes (e.g. "owner%2Fmodel").
 func resolveModelID(r *http.Request) string {
 	if owner := chi.URLParam(r, "owner"); owner != "" {
 		return owner + "/" + chi.URLParam(r, "model")
 	}
-	return chi.URLParam(r, "model")
+	raw := chi.URLParam(r, "model")
+	if decoded, err := url.QueryUnescape(raw); err == nil {
+		return decoded
+	}
+	return raw
 }
 
 func statusFor(err error) int {

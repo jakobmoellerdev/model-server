@@ -17,12 +17,20 @@ import (
 func NewHandler(reg registry.ModelRegistry) http.Handler {
 	r := chi.NewRouter()
 
+	r.Get("/version", ollamaVersion())
 	r.Get("/tags", tags(reg))
 	r.Post("/show", show(reg))
 	r.Post("/pull", pull(reg))
 	r.Delete("/delete", deleteModel())
 
 	return r
+}
+
+func ollamaVersion() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"version": "0.1.0"}) //nolint:errcheck
+	}
 }
 
 func tags(reg registry.ModelRegistry) http.HandlerFunc {

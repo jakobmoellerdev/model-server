@@ -54,14 +54,14 @@ func run() error {
 		return fmt.Errorf("create OCM client: %w", err)
 	}
 
-	modelReg, err := registry.NewOCMRegistry(ocmClient, cfg.OCM.IndexTTL, log)
+	modelReg, err := registry.NewOCMRegistry(ocmClient, cfg.OCM.IndexTTL.Duration, log)
 	if err != nil {
 		return fmt.Errorf("create registry: %w", err)
 	}
 
 	// Background index refresh
 	go func() {
-		ticker := time.NewTicker(cfg.OCM.RefreshInterval)
+		ticker := time.NewTicker(cfg.OCM.RefreshInterval.Duration)
 		defer ticker.Stop()
 		for range ticker.C {
 			if err := modelReg.Refresh(context.Background()); err != nil {
@@ -81,7 +81,7 @@ func run() error {
 
 	select {
 	case <-ctx.Done():
-		return srv.Shutdown(cfg.Server.ShutdownTimeout)
+		return srv.Shutdown(cfg.Server.ShutdownTimeout.Duration)
 	case err := <-errCh:
 		return err
 	}

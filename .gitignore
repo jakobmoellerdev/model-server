@@ -2,3 +2,4 @@ bin/
 coverage.out
 *.test
 transport-archive/
+__pycache__

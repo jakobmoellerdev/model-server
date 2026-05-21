@@ -22,9 +22,9 @@ func New(cfg config.ServerConfig, handler http.Handler, log *slog.Logger) *Serve
 		httpServer: &http.Server{
 			Addr:         cfg.Listen,
 			Handler:      handler,
-			ReadTimeout:  cfg.ReadTimeout,
-			WriteTimeout: cfg.WriteTimeout,
-			IdleTimeout:  cfg.IdleTimeout,
+			ReadTimeout:  cfg.ReadTimeout.Duration,
+			WriteTimeout: cfg.WriteTimeout.Duration,
+			IdleTimeout:  cfg.IdleTimeout.Duration,
 		},
 		log: log,
 	}

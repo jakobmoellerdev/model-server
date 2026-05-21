@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
@@ -10,6 +11,28 @@ import (
 	"github.com/go-playground/validator/v10"
 	"sigs.k8s.io/yaml"
 )
+
+// Duration wraps time.Duration to support both string ("5m") and nanosecond-int
+// forms in JSON/YAML unmarshaling.
+type Duration struct{ time.Duration }
+
+func (d *Duration) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err == nil {
+		v, err := time.ParseDuration(s)
+		if err != nil {
+			return err
+		}
+		d.Duration = v
+		return nil
+	}
+	var n int64
+	if err := json.Unmarshal(b, &n); err != nil {
+		return err
+	}
+	d.Duration = time.Duration(n)
+	return nil
+}
 
 var envVarPattern = regexp.MustCompile(`\$\{([^}]+)\}`)
 
@@ -23,11 +46,11 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Listen          string        `json:"listen"          validate:"required"`
-	ReadTimeout     time.Duration `json:"readTimeout"`
-	WriteTimeout    time.Duration `json:"writeTimeout"`
-	IdleTimeout     time.Duration `json:"idleTimeout"`
-	ShutdownTimeout time.Duration `json:"shutdownTimeout"`
+	Listen          string   `json:"listen"          validate:"required"`
+	ReadTimeout     Duration `json:"readTimeout"`
+	WriteTimeout    Duration `json:"writeTimeout"`
+	IdleTimeout     Duration `json:"idleTimeout"`
+	ShutdownTimeout Duration `json:"shutdownTimeout"`
 }
 
 type AuthConfig struct {
@@ -45,8 +68,8 @@ type OCMConfig struct {
 	Repositories    []RepositorySpec `json:"repositories"    validate:"required,min=1"`
 	BlobCache       BlobCacheConfig  `json:"blobCache"`
 	Signatures      SignatureConfig  `json:"signatures"`
-	RefreshInterval time.Duration    `json:"refreshInterval"`
-	IndexTTL        time.Duration    `json:"indexTTL"`
+	RefreshInterval Duration         `json:"refreshInterval"`
+	IndexTTL        Duration         `json:"indexTTL"`
 }
 
 type RepositorySpec struct {
@@ -57,9 +80,9 @@ type RepositorySpec struct {
 }
 
 type BlobCacheConfig struct {
-	Path         string        `json:"path"`
-	MaxSizeBytes int64         `json:"maxSizeBytes"`
-	TTL          time.Duration `json:"ttl"`
+	Path         string   `json:"path"`
+	MaxSizeBytes int64    `json:"maxSizeBytes"`
+	TTL          Duration `json:"ttl"`
 }
 
 type SignatureConfig struct {
@@ -120,29 +143,29 @@ func applyDefaults(cfg *Config) {
 	if cfg.Server.Listen == "" {
 		cfg.Server.Listen = ":8080"
 	}
-	if cfg.Server.ReadTimeout == 0 {
-		cfg.Server.ReadTimeout = 30 * time.Second
+	if cfg.Server.ReadTimeout.Duration == 0 {
+		cfg.Server.ReadTimeout = Duration{30 * time.Second}
 	}
-	if cfg.Server.IdleTimeout == 0 {
-		cfg.Server.IdleTimeout = 120 * time.Second
+	if cfg.Server.IdleTimeout.Duration == 0 {
+		cfg.Server.IdleTimeout = Duration{120 * time.Second}
 	}
-	if cfg.Server.ShutdownTimeout == 0 {
-		cfg.Server.ShutdownTimeout = 30 * time.Second
+	if cfg.Server.ShutdownTimeout.Duration == 0 {
+		cfg.Server.ShutdownTimeout = Duration{30 * time.Second}
 	}
 	if cfg.Auth.Mode == "" {
 		cfg.Auth.Mode = "none"
 	}
-	if cfg.OCM.RefreshInterval == 0 {
-		cfg.OCM.RefreshInterval = 5 * time.Minute
+	if cfg.OCM.RefreshInterval.Duration == 0 {
+		cfg.OCM.RefreshInterval = Duration{5 * time.Minute}
 	}
-	if cfg.OCM.IndexTTL == 0 {
-		cfg.OCM.IndexTTL = 60 * time.Second
+	if cfg.OCM.IndexTTL.Duration == 0 {
+		cfg.OCM.IndexTTL = Duration{60 * time.Second}
 	}
 	if cfg.OCM.BlobCache.MaxSizeBytes == 0 {
 		cfg.OCM.BlobCache.MaxSizeBytes = 100 * 1024 * 1024 * 1024
 	}
-	if cfg.OCM.BlobCache.TTL == 0 {
-		cfg.OCM.BlobCache.TTL = 168 * time.Hour
+	if cfg.OCM.BlobCache.TTL.Duration == 0 {
+		cfg.OCM.BlobCache.TTL = Duration{168 * time.Hour}
 	}
 	if cfg.OCM.BlobCache.Path == "" {
 		cfg.OCM.BlobCache.Path = "/var/cache/model-server"

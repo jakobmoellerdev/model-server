@@ -17,7 +17,7 @@ import os
 
 BASE_URL = os.environ.get("MODEL_SERVER_URL", "http://localhost:8080")
 MODEL_NAME = os.environ.get("MODEL_ID", "example-org/tiny-model")
-MODEL_VERSION = os.environ.get("MODEL_VERSION", "1")
+MODEL_VERSION = os.environ.get("MODEL_VERSION", "1.0.0")
 
 import mlflow  # noqa: E402
 from mlflow import MlflowClient  # noqa: E402
