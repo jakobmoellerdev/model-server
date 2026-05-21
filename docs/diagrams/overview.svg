@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="960" height="400">
+  <style>
+    text { font-family: 'Courier New', 'Lucida Console', monospace; fill: #caf0f8; }
+  </style>
+  <defs>
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#112240" stroke-width="0.5"/>
+    </pattern>
+    <marker id="arrow-cyan" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#00b4d8"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#06d6a0"/>
+    </marker>
+  </defs>
+  <!-- Background -->
+  <rect width="960" height="400" fill="#0d1b2a"/>
+  <rect width="960" height="400" fill="url(#grid)" opacity="0.6"/>
+  <!-- Title -->
+  <text x="480" y="36" text-anchor="middle" font-size="18" font-weight="700" fill="#ffffff" letter-spacing="0.08em">model-server Architecture</text>
+  <!-- Clients box -->
+  <rect x="30" y="70" width="170" height="260" rx="2" fill="#0d1f3c" stroke="#00b4d8" stroke-width="1"/>
+  <!-- Clients header bar -->
+  <rect x="30" y="70" width="170" height="26" rx="2" fill="#00b4d8" fill-opacity="0.2"/>
+  <line x1="30" y1="96" x2="200" y2="96" stroke="#00b4d8" stroke-width="0.8"/>
+  <text x="115" y="88" text-anchor="middle" font-size="11" font-weight="700" fill="#00b4d8" letter-spacing="0.08em">CLIENTS</text>
+  <rect x="45" y="108" width="140" height="40" rx="2" fill="#0a2240" stroke="#48cae4" stroke-width="1"/>
+  <text x="115" y="124" text-anchor="middle" font-size="12" fill="#caf0f8">HF Python SDK</text>
+  <text x="115" y="140" text-anchor="middle" font-size="10" fill="#90e0ef">huggingface_hub</text>
+  <rect x="45" y="160" width="140" height="40" rx="2" fill="#0a2240" stroke="#48cae4" stroke-width="1"/>
+  <text x="115" y="176" text-anchor="middle" font-size="12" fill="#caf0f8">ollama CLI</text>
+  <text x="115" y="192" text-anchor="middle" font-size="10" fill="#90e0ef">REST client</text>
+  <rect x="45" y="212" width="140" height="40" rx="2" fill="#0a2240" stroke="#48cae4" stroke-width="1"/>
+  <text x="115" y="228" text-anchor="middle" font-size="12" fill="#caf0f8">curl / browser</text>
+  <text x="115" y="244" text-anchor="middle" font-size="10" fill="#90e0ef">HTTP</text>
+  <!-- model-server main box -->
+  <rect x="250" y="55" width="460" height="300" rx="2" fill="#0d1f3c" stroke="#ffffff" stroke-width="1.5"/>
+  <rect x="250" y="55" width="460" height="30" rx="2" fill="#ffffff" fill-opacity="0.12"/>
+  <line x1="250" y1="85" x2="710" y2="85" stroke="#ffffff" stroke-width="1"/>
+  <text x="480" y="76" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff" letter-spacing="0.1em">model-server</text>
+  <!-- HF Hub API section -->
+  <rect x="265" y="95" width="200" height="210" rx="2" fill="#0a2240" stroke="#00b4d8" stroke-width="1" stroke-dasharray="5,3"/>
+  <rect x="265" y="95" width="200" height="22" rx="2" fill="#00b4d8" fill-opacity="0.25"/>
+  <line x1="265" y1="117" x2="465" y2="117" stroke="#00b4d8" stroke-width="0.5"/>
+  <text x="365" y="111" text-anchor="middle" font-size="11" font-weight="700" fill="#00b4d8" letter-spacing="0.06em">HF HUB API</text>
+  <text x="365" y="139" text-anchor="middle" font-size="12" fill="#caf0f8">/api/models</text>
+  <text x="365" y="161" text-anchor="middle" font-size="12" fill="#caf0f8">/resolve/</text>
+  <!-- Ollama API section -->
+  <rect x="480" y="95" width="215" height="210" rx="2" fill="#0a2240" stroke="#48cae4" stroke-width="1" stroke-dasharray="5,3"/>
+  <rect x="480" y="95" width="215" height="22" rx="2" fill="#48cae4" fill-opacity="0.2"/>
+  <line x1="480" y1="117" x2="695" y2="117" stroke="#48cae4" stroke-width="0.5"/>
+  <text x="587" y="111" text-anchor="middle" font-size="11" font-weight="700" fill="#48cae4" letter-spacing="0.06em">OLLAMA API</text>
+  <text x="587" y="139" text-anchor="middle" font-size="12" fill="#caf0f8">/api/tags</text>
+  <text x="587" y="161" text-anchor="middle" font-size="12" fill="#caf0f8">/api/pull</text>
+  <text x="587" y="183" text-anchor="middle" font-size="12" fill="#caf0f8">/api/show</text>
+  <!-- Health endpoints -->
+  <line x1="265" y1="315" x2="695" y2="315" stroke="#00b4d8" stroke-width="0.5" stroke-dasharray="4,2"/>
+  <text x="380" y="335" text-anchor="middle" font-size="11" fill="#48cae4">/healthz</text>
+  <text x="480" y="335" text-anchor="middle" font-size="11" fill="#48cae4">|</text>
+  <text x="580" y="335" text-anchor="middle" font-size="11" fill="#48cae4">/readyz</text>
+  <!-- OCM Backends container -->
+  <rect x="760" y="70" width="170" height="260" rx="2" fill="#0d1f3c" stroke="#06d6a0" stroke-width="1"/>
+  <rect x="760" y="70" width="170" height="26" rx="2" fill="#06d6a0" fill-opacity="0.2"/>
+  <line x1="760" y1="96" x2="930" y2="96" stroke="#06d6a0" stroke-width="0.8"/>
+  <text x="845" y="88" text-anchor="middle" font-size="11" font-weight="700" fill="#06d6a0" letter-spacing="0.08em">OCM BACKEND</text>
+  <rect x="775" y="108" width="140" height="58" rx="2" fill="#0a2240" stroke="#48cae4" stroke-width="1"/>
+  <text x="845" y="126" text-anchor="middle" font-size="12" fill="#caf0f8">OCI Registry</text>
+  <text x="845" y="143" text-anchor="middle" font-size="10" fill="#90e0ef">GHCR / ECR / ACR</text>
+  <text x="845" y="158" text-anchor="middle" font-size="10" fill="#48cae4">(remote)</text>
+  <rect x="775" y="180" width="140" height="58" rx="2" fill="#0a2240" stroke="#48cae4" stroke-width="1"/>
+  <text x="845" y="198" text-anchor="middle" font-size="12" fill="#caf0f8">CTF Archive</text>
+  <text x="845" y="215" text-anchor="middle" font-size="10" fill="#90e0ef">local file</text>
+  <text x="845" y="230" text-anchor="middle" font-size="10" fill="#48cae4">(filesystem)</text>
+  <!-- Client arrows → model-server -->
+  <line x1="185" y1="128" x2="249" y2="200" stroke="#00b4d8" stroke-width="1.5" marker-end="url(#arrow-cyan)"/>
+  <line x1="185" y1="180" x2="249" y2="200" stroke="#00b4d8" stroke-width="1.5" marker-end="url(#arrow-cyan)"/>
+  <line x1="185" y1="232" x2="249" y2="200" stroke="#00b4d8" stroke-width="1.5" marker-end="url(#arrow-cyan)"/>
+  <rect x="188" y="184" width="46" height="16" rx="2" fill="#0d1b2a" opacity="0.95"/>
+  <text x="211" y="196" text-anchor="middle" font-size="10" fill="#00b4d8">HTTP</text>
+  <!-- Server arrows → OCM backends -->
+  <line x1="711" y1="185" x2="759" y2="137" stroke="#06d6a0" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <line x1="711" y1="215" x2="759" y2="215" stroke="#06d6a0" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <rect x="712" y="188" width="92" height="16" rx="2" fill="#0d1b2a" opacity="0.95"/>
+  <text x="758" y="200" text-anchor="middle" font-size="10" fill="#06d6a0">OCM bindings</text>
+  <!-- Legend -->
+  <rect x="30" y="345" width="260" height="42" rx="2" fill="#0d1f3c" stroke="#00b4d8" stroke-width="0.5" opacity="0.9"/>
+  <text x="46" y="361" font-size="10" fill="#00b4d8" letter-spacing="0.06em">LEGEND</text>
+  <line x1="46" y1="378" x2="76" y2="378" stroke="#00b4d8" stroke-width="1.5" marker-end="url(#arrow-cyan)"/>
+  <text x="82" y="382" font-size="10" fill="#90e0ef">HTTP</text>
+  <line x1="140" y1="378" x2="170" y2="378" stroke="#06d6a0" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <text x="176" y="382" font-size="10" fill="#90e0ef">OCM bindings</text>
+</svg>

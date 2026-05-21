@@ -4,16 +4,7 @@ A Go server that makes OCM (Open Component Model) repositories look like Hugging
 
 ## Overview
 
-```
-HF SDK / ollama CLI / curl
-         │
-         ▼
-   model-server (this)
-         │
-         ▼
-  OCM Component Version
-  (OCI registry / CTF archive)
-```
+![model-server Architecture](docs/diagrams/overview.png)
 
 - **No inference.** No proxying. Pure model distribution.
 - **Supply-chain traceability** via OCM signatures and provenance.
