@@ -64,7 +64,10 @@ func (idx *index) search(f SearchFilter) []ModelDescriptor {
 		result = append(result, d)
 	}
 
-	if f.Offset > 0 && f.Offset < len(result) {
+	if f.Offset > 0 {
+		if f.Offset >= len(result) {
+			return nil
+		}
 		result = result[f.Offset:]
 	}
 	if f.Limit > 0 && f.Limit < len(result) {

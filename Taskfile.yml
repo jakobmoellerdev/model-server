@@ -1,0 +1,73 @@
+# https://taskfile.dev
+version: "3"
+
+vars:
+  BINARY: model-server
+  BINDIR: bin
+  MODULE:
+    sh: go list -m
+
+tasks:
+  default:
+    desc: Build the binary
+    deps: [build]
+
+  build:
+    desc: Compile the server binary
+    cmds:
+      - go build -trimpath -o {{.BINDIR}}/{{.BINARY}} ./cmd/{{.BINARY}}
+    sources:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+    generates:
+      - "{{.BINDIR}}/{{.BINARY}}"
+
+  test:
+    desc: Run all tests (unit + integration) with race detector
+    cmds:
+      - go test -race -count=1 ./...
+
+  test:unit:
+    desc: Run unit tests only (excludes integration)
+    cmds:
+      - go test -race -count=1 $(go list ./... | grep -v '/test/')
+
+  test:integration:
+    desc: Run integration tests only
+    cmds:
+      - go test -race -count=1 -v ./test/integration/...
+
+  vet:
+    desc: Run go vet
+    cmds:
+      - go vet ./...
+
+  lint:
+    desc: Run golangci-lint (requires golangci-lint in PATH)
+    cmds:
+      - golangci-lint run ./...
+
+  cover:
+    desc: Run tests with coverage and print total
+    cmds:
+      - go test -race -count=1 -coverprofile=coverage.out ./...
+      - go tool cover -func=coverage.out | grep total
+    generates:
+      - coverage.out
+
+  cover:html:
+    desc: Open coverage report in browser
+    deps: [cover]
+    cmds:
+      - go tool cover -html=coverage.out
+
+  docker:
+    desc: Build the Docker image
+    cmds:
+      - docker build -t {{.BINARY}}:latest -f deploy/docker/Dockerfile .
+
+  clean:
+    desc: Remove build artefacts
+    cmds:
+      - rm -rf {{.BINDIR}}/ coverage.out
