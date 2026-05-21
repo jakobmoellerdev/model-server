@@ -17,16 +17,16 @@ jobs:
     env:
       TARGET: ghcr.io/${{ github.repository_owner }}/model-server/models
       COMPONENT: github.com/jakobmoellerdev/model-server/models/tiny-model
-      VERSION: "1.0.0"
+      COMPONENT_VERSION: "1.0.0"
+      OCM_VERSION: "0.42.0"
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Install OCM CLI
         run: |
-          VERSION=0.42.0
           curl -fsSL \
-            "https://github.com/open-component-model/ocm/releases/download/v${VERSION}/ocm-${VERSION}-linux-amd64.tar.gz" \
+            "https://github.com/open-component-model/ocm/releases/download/v${OCM_VERSION}/ocm-${OCM_VERSION}-linux-amd64.tar.gz" \
             | tar -xz -C /usr/local/bin ocm
           ocm version
 
@@ -41,8 +41,8 @@ jobs:
         working-directory: examples/component
         run: |
           ocm add componentversions \
-            --repository ctf::./transport-archive \
-            --constructor component-constructor.yaml
+            --file ./transport-archive \
+            component-constructor.yaml
 
       - name: Verify CTF
         working-directory: examples/component
@@ -52,11 +52,11 @@ jobs:
         working-directory: examples/component
         run: |
           ocm transfer componentversions \
-            "ctf::./transport-archive//${COMPONENT}:${VERSION}" \
+            "ctf::./transport-archive//${COMPONENT}:${COMPONENT_VERSION}" \
             "$TARGET" \
             --copy-resources
 
       - name: Verify remote
         run: |
-          ocm get componentversions "${{ env.TARGET }}//${{ env.COMPONENT }}:${{ env.VERSION }}"
+          ocm get componentversions "${{ env.TARGET }}//${{ env.COMPONENT }}:${{ env.COMPONENT_VERSION }}"
           echo "Sample component published at ${{ env.TARGET }}"
