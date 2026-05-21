@@ -9,14 +9,14 @@ A Go server that makes OCM (Open Component Model) repositories look like Hugging
 - **No inference.** No proxying. Pure model distribution.
 - **Supply-chain traceability** via OCM signatures and provenance.
 - **Multi-registry**: serve from GHCR, AWS ECR, Azure ACR, or a local CTF file.
-- **Dual API surface**: HF Hub-compatible + Ollama-compatible, simultaneously.
+- **Four API surfaces**: HF Hub, Ollama, OpenAI, and MLflow Model Registry — simultaneously.
 
 ## Quick Start
 
 ### 1. Build
 
 ```bash
-make build          # produces bin/model-server
+task build          # produces bin/model-server
 # or
 go build -o bin/model-server ./cmd/model-server
 ```
@@ -46,6 +46,10 @@ apis:
   hfhub:
     enabled: true
   ollama:
+    enabled: true
+  openai:
+    enabled: true
+  mlflow:
     enabled: true
 
 credentials:
@@ -207,6 +211,45 @@ curl -X POST $BASE/api/show -d '{"name":"meta-llama/Llama-3-8B"}' | jq .
 curl -X POST $BASE/api/pull -d '{"name":"meta-llama/Llama-3-8B"}'
 ```
 
+### OpenAI Python SDK
+
+Point the SDK at the server with `base_url`:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:8080/v1", api_key="any")
+
+# List all models
+for model in client.models.list():
+    print(model.id, model.owned_by)
+
+# Retrieve a specific model
+model = client.models.retrieve("meta-llama/Llama-3-8B")
+print(model.id, model.created)
+```
+
+### MLflow Python client
+
+```python
+import mlflow
+
+mlflow.set_tracking_uri("http://localhost:8080")
+client = mlflow.MlflowClient()
+
+# List registered models
+for rm in client.search_registered_models():
+    print(rm.name, rm.latest_versions[0].version)
+
+# Get a specific model version
+mv = client.get_model_version("meta-llama/Llama-3-8B", "1")
+print(mv.status, mv.source)
+
+# Get download URI for a version
+uri = client.get_model_version_download_uri("meta-llama/Llama-3-8B", "1")
+print(uri)
+```
+
 ---
 
 ## API Reference
@@ -260,16 +303,20 @@ curl -X POST $BASE/api/pull -d '{"name":"meta-llama/Llama-3-8B"}'
 
 ```bash
 # Run all tests
-make test
+task test
+
+# Run unit tests only
+task test:unit
 
 # Run integration tests only
-go test ./test/integration/... -v
+task test:integration
 
 # Test coverage (target: ≥80%)
-make cover
+task cover
 
-# Vet
-make vet
+# Vet + lint
+task vet
+task lint
 ```
 
 ---

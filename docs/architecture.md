@@ -61,3 +61,52 @@ How an OCM component descriptor (labels + resources) maps to model-server's inte
 | `json` | `application/json` |
 | `markdown` | `text/markdown` |
 | _(default)_ | `application/octet-stream` |
+
+---
+
+## API Surface
+
+### Hugging Face Hub
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/models` | List models (`?search=`, `?task=`, `?limit=`, `?skip=`) |
+| `GET` | `/api/models/{owner}/{model}` | Model metadata + file list |
+| `GET` | `/api/models/{model}` | Single-segment model ID |
+| `GET` | `/api/models/{owner}/{model}/tree/{revision}` | File tree |
+| `GET/HEAD` | `/{owner}/{model}/resolve/{revision}/{file}` | Download or stat a file |
+| `GET/HEAD` | `/{owner}/{model}/raw/{revision}/{file}` | Raw file access (alias for resolve) |
+
+### Ollama
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/tags` | List stored models |
+| `POST` | `/api/show` | Model info + Modelfile |
+| `POST` | `/api/pull` | Pull model, streams NDJSON progress |
+
+### OpenAI
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/v1/models` | List models (OpenAI-compatible object: list) |
+| `GET` | `/v1/models/{owner}/{model}` | Get model by two-segment ID |
+| `GET` | `/v1/models/{model}` | Get model by single-segment ID |
+
+### MLflow Model Registry
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/2.0/mlflow/registered-models/search` | Search registered models (`?filter=`, `?max_results=`) |
+| `GET` | `/api/2.0/mlflow/registered-models/get` | Get model by name (`?name=`) |
+| `GET` | `/api/2.0/mlflow/model-versions/search` | Search model versions (`?filter=`, `?max_results=`) |
+| `GET` | `/api/2.0/mlflow/model-versions/get` | Get version (`?name=`, `?version=`) |
+| `GET` | `/api/2.0/mlflow/model-versions/get-download-uri` | Get download URI (`?name=`, `?version=`) |
+
+### Health / Observability
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/healthz` | Liveness probe — always 200 |
+| `GET` | `/readyz` | Readiness probe — 503 until index built |
+| `GET` | `/metrics` | Prometheus metrics |

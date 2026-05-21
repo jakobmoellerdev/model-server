@@ -38,9 +38,14 @@ At startup model-server builds an in-memory index by calling `ListComponents` ac
 
 *Trade-off:* stale window between refresh ticks. Acceptable for model registries where write frequency is low. `Describe` always hits OCM live; only `Search`/`List` reads the index.
 
-### 3. Dual API surface (HF Hub + Ollama), no inference
+### 3. Four API surfaces (HF Hub, Ollama, OpenAI, MLflow), no inference
 
-model-server is a **registry**, not an inference server. It serves model files and metadata only. Both API surfaces share one `ModelRegistry` interface — the same `OCMRegistry` instance handles all requests.
+model-server is a **registry**, not an inference server. It serves model files and metadata only. All four API surfaces share one `ModelRegistry` interface — the same `OCMRegistry` instance handles all requests.
+
+- **HF Hub** — full compatibility with `huggingface_hub` Python SDK and `transformers`
+- **Ollama** — `ollama list`, `ollama pull`, `ollama show` via `OLLAMA_HOST`
+- **OpenAI** — `/v1/models` list/retrieve for any client using the OpenAI SDK
+- **MLflow** — model registry read path; downstream tools can discover and download artifacts via the MLflow client
 
 *Trade-off:* Ollama `pull` streams blobs through the server rather than redirecting (OCI registries support redirects but the implementation currently streams). Future work: redirect to OCI CDN URL for `IsLFS=true` resources.
 
@@ -75,11 +80,11 @@ Chose the new fine-grained module set over the old monolith (`ocm.software/ocm`)
 
 | Endpoint | Status | Notes |
 |---|---|---|
-| `GET /api/models` | Implemented | Supports `?task=` filter |
+| `GET /api/models` | Implemented | Supports `?task=`, `?search=`, `?limit=`, `?skip=` |
 | `GET /api/models/{owner}/{model}` | Implemented | Returns `ModelInfo` with siblings |
 | `GET /api/models/{model}` | Implemented | Single-segment model ID |
 | `GET /api/models/{owner}/{model}/tree/{revision}` | Implemented | Returns `[]TreeEntry` |
-| `GET /{owner}/{model}/resolve/{revision}/*` | Implemented | Streams blob from OCM |
+| `GET /{owner}/{model}/resolve/{revision}/*` | Implemented | Streams blob from OCM; sets `X-Repo-Commit`, `ETag`, `Content-Length` |
 | `GET /{owner}/{model}/raw/{revision}/*` | Implemented | Alias for resolve |
 | `POST /api/models` (create) | Not implemented | Read-only registry |
 | `DELETE /api/models/{model}` | Not implemented | Read-only registry |
@@ -96,6 +101,25 @@ Chose the new fine-grained module set over the old monolith (`ocm.software/ocm`)
 | `POST /api/copy` | Stub | Not yet implemented |
 | `POST /api/blobs/{digest}` | Not implemented | Upload path for push |
 | `HEAD /api/blobs/{digest}` | Not implemented | Upload path for push |
+
+### OpenAI endpoints
+
+| Endpoint | Status | Notes |
+|---|---|---|
+| `GET /v1/models` | Implemented | Returns `{"object":"list","data":[...]}` |
+| `GET /v1/models/{owner}/{model}` | Implemented | Two-segment model ID |
+| `GET /v1/models/{model}` | Implemented | Single-segment model ID |
+
+### MLflow Model Registry endpoints
+
+| Endpoint | Status | Notes |
+|---|---|---|
+| `GET /api/2.0/mlflow/registered-models/search` | Implemented | `?filter=`, `?max_results=` |
+| `GET /api/2.0/mlflow/registered-models/get` | Implemented | `?name=` required |
+| `GET /api/2.0/mlflow/model-versions/search` | Implemented | `?filter=`, `?max_results=` |
+| `GET /api/2.0/mlflow/model-versions/get` | Implemented | `?name=`, `?version=` |
+| `GET /api/2.0/mlflow/model-versions/get-download-uri` | Implemented | Returns HF-Hub-compatible `/resolve/` URI |
+| Write endpoints (create, update, delete, transition) | Not implemented | Read-only registry |
 
 ### Health / Observability
 
@@ -173,8 +197,10 @@ model-server/
 │   ├── server/                     chi router, HTTP server, graceful shutdown
 │   │   └── middleware/             auth · logging · metrics
 │   ├── api/
-│   │   ├── hfhub/                  HuggingFace Hub compatible handlers
+│   │   ├── hfhub/                  Hugging Face Hub compatible handlers
 │   │   ├── ollama/                 Ollama compatible handlers
+│   │   ├── openai/                 OpenAI /v1/models handlers
+│   │   ├── mlflow/                 MLflow Model Registry handlers
 │   │   └── health/                 /healthz · /readyz
 │   ├── registry/                   ModelRegistry interface + OCMRegistry impl
 │   │   ├── registry.go             interface
@@ -192,7 +218,7 @@ model-server/
 │   ├── component/                  example OCM component YAML
 │   └── config/                     example model-server.yaml
 └── docs/
-    ├── architecture.md             diagrams (this repo)
+    ├── architecture.md             diagrams + API surface reference
     └── proposal.md                 this document
 ```
 
@@ -217,13 +243,19 @@ apis:
     enabled: true
   ollama:
     enabled: true
+  openai:
+    enabled: true
+  mlflow:
+    enabled: true
 EOF
 
 go run ./cmd/model-server -config model-server.yaml
 
 # Verify
-curl http://localhost:8080/api/models
-curl http://localhost:8080/api/tags
+curl http://localhost:8080/api/models                                  # HF Hub
+curl http://localhost:8080/api/tags                                    # Ollama
+curl http://localhost:8080/v1/models                                   # OpenAI
+curl "http://localhost:8080/api/2.0/mlflow/registered-models/search"  # MLflow
 curl -X POST http://localhost:8080/api/show -d '{"name":"org/my-model"}'
 ```
 
