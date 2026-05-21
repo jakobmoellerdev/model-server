@@ -13,22 +13,25 @@ import (
 	"github.com/open-component-model/model-server/internal/registry"
 )
 
-// NewHandler returns an http.Handler for all HF Hub-compatible routes.
-func NewHandler(reg registry.ModelRegistry) http.Handler {
-	r := chi.NewRouter()
-
+// MountRoutes registers all HF Hub-compatible routes on the given router.
+// Routes are registered directly to avoid conflicts with /api prefix used by Ollama.
+func MountRoutes(r chi.Router, reg registry.ModelRegistry) {
 	// Model discovery
 	r.Get("/api/models", listModels(reg))
+	r.Get("/api/models/{owner}/{model}/tree/{revision}", fileTree(reg))
 	r.Get("/api/models/{owner}/{model}", modelInfoOwner(reg))
 	r.Get("/api/models/{model}", modelInfoSingle(reg))
 
-	// File tree
-	r.Get("/api/models/{owner}/{model}/tree/{revision}", fileTree(reg))
-
-	// File downloads: /{owner}/{model}/resolve/{revision}/* and raw/*
+	// File downloads
 	r.Get("/{owner}/{model}/resolve/{revision}/*", downloadFile(reg))
 	r.Get("/{owner}/{model}/raw/{revision}/*", downloadFile(reg))
+}
 
+// NewHandler returns an http.Handler for all HF Hub-compatible routes.
+// Deprecated: use MountRoutes to avoid /api prefix conflicts with Ollama.
+func NewHandler(reg registry.ModelRegistry) http.Handler {
+	r := chi.NewRouter()
+	MountRoutes(r, reg)
 	return r
 }
 

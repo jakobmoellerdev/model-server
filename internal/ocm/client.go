@@ -18,6 +18,16 @@ type Client struct {
 	log   *slog.Logger
 }
 
+// NewClientFromRepository creates a Client backed by a single already-open repository.
+// Intended for tests and in-process usage where the caller manages repo lifecycle.
+func NewClientFromRepository(repo ocm.Repository) *Client {
+	return &Client{
+		ctx:   ocm.DefaultContext(),
+		repos: []ocm.Repository{repo},
+		log:   slog.Default(),
+	}
+}
+
 // NewClient opens all configured OCM repositories.
 func NewClient(cfg config.OCMConfig, creds map[string]config.CredentialSpec, log *slog.Logger) (*Client, error) {
 	ctx := ocm.DefaultContext()
@@ -45,8 +55,11 @@ func (c *Client) Close() {
 }
 
 // LookupVersion finds a component version across configured repos.
-// version="" returns the latest available version.
+// version="" or "main" or "latest" returns the latest available version.
 func (c *Client) LookupVersion(componentName, version string) (ocm.ComponentVersionAccess, error) {
+	if version == "main" || version == "latest" {
+		version = ""
+	}
 	for _, repo := range c.repos {
 		comp, err := repo.LookupComponent(componentName)
 		if err != nil {

@@ -34,7 +34,7 @@ func NewRouter(cfg *config.Config, reg registry.ModelRegistry) http.Handler {
 	r.Handle("/metrics", promhttp.Handler())
 
 	if cfg.APIs.HFHub.Enabled {
-		r.Mount("/", hfhub.NewHandler(reg))
+		hfhub.MountRoutes(r, reg)
 	}
 
 	if cfg.APIs.Ollama.Enabled {
