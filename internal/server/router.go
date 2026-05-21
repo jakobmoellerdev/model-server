@@ -9,7 +9,9 @@ import (
 
 	"github.com/open-component-model/model-server/internal/api/health"
 	"github.com/open-component-model/model-server/internal/api/hfhub"
+	"github.com/open-component-model/model-server/internal/api/mlflow"
 	"github.com/open-component-model/model-server/internal/api/ollama"
+	"github.com/open-component-model/model-server/internal/api/openai"
 	"github.com/open-component-model/model-server/internal/config"
 	"github.com/open-component-model/model-server/internal/registry"
 	"github.com/open-component-model/model-server/internal/server/middleware"
@@ -39,6 +41,14 @@ func NewRouter(cfg *config.Config, reg registry.ModelRegistry) http.Handler {
 
 	if cfg.APIs.Ollama.Enabled {
 		r.Mount("/api", ollama.NewHandler(reg))
+	}
+
+	if cfg.APIs.OpenAI.Enabled {
+		openai.MountRoutes(r, reg)
+	}
+
+	if cfg.APIs.MLflow.Enabled {
+		mlflow.MountRoutes(r, reg)
 	}
 
 	return r

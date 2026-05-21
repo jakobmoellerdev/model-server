@@ -33,6 +33,10 @@ apis:
     enabled: true
   ollama:
     enabled: true
+  openai:
+    enabled: true
+  mlflow:
+    enabled: true
 
 credentials:
   ghcr-creds:

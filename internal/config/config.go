@@ -70,6 +70,8 @@ type SignatureConfig struct {
 type APIsConfig struct {
 	HFHub  APIConfig `json:"hfhub"`
 	Ollama APIConfig `json:"ollama"`
+	OpenAI APIConfig `json:"openai"`
+	MLflow APIConfig `json:"mlflow"`
 }
 
 type APIConfig struct {
@@ -147,4 +149,6 @@ func applyDefaults(cfg *Config) {
 	}
 	cfg.APIs.HFHub.Enabled = true
 	cfg.APIs.Ollama.Enabled = true
+	cfg.APIs.OpenAI.Enabled = true
+	cfg.APIs.MLflow.Enabled = true
 }

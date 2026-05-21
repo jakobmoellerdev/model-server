@@ -229,6 +229,24 @@ curl -X POST $BASE/api/pull -d '{"name":"meta-llama/Llama-3-8B"}'
 | `POST` | `/api/show` | Model info (`{"name":"..."}`) |
 | `POST` | `/api/pull` | Pull model, streams NDJSON progress |
 
+### OpenAI
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/v1/models` | List models (OpenAI-compatible) |
+| `GET` | `/v1/models/{owner}/{model}` | Get model by ID |
+| `GET` | `/v1/models/{model}` | Get model by single-segment ID |
+
+### MLflow Model Registry
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/2.0/mlflow/registered-models/search` | Search registered models (`?filter=`, `?max_results=`) |
+| `GET` | `/api/2.0/mlflow/registered-models/get` | Get model by name (`?name=`) |
+| `GET` | `/api/2.0/mlflow/model-versions/search` | Search model versions (`?filter=`, `?max_results=`) |
+| `GET` | `/api/2.0/mlflow/model-versions/get` | Get version (`?name=`, `?version=`) |
+| `GET` | `/api/2.0/mlflow/model-versions/get-download-uri` | Get download URI (`?name=`, `?version=`) |
+
 ### Health
 
 | Method | Path | Description |
