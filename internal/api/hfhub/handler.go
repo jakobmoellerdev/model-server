@@ -22,9 +22,11 @@ func MountRoutes(r chi.Router, reg registry.ModelRegistry) {
 	r.Get("/api/models/{owner}/{model}", modelInfoOwner(reg))
 	r.Get("/api/models/{model}", modelInfoSingle(reg))
 
-	// File downloads
+	// File downloads — GET streams the blob, HEAD returns metadata only
 	r.Get("/{owner}/{model}/resolve/{revision}/*", downloadFile(reg))
+	r.Head("/{owner}/{model}/resolve/{revision}/*", downloadFile(reg))
 	r.Get("/{owner}/{model}/raw/{revision}/*", downloadFile(reg))
+	r.Head("/{owner}/{model}/raw/{revision}/*", downloadFile(reg))
 }
 
 // NewHandler returns an http.Handler for all HF Hub-compatible routes.
@@ -92,7 +94,7 @@ func fileTree(reg registry.ModelRegistry) http.HandlerFunc {
 		}
 		entries := make([]TreeEntry, len(files))
 		for i, f := range files {
-			entries[i] = TreeEntry{Type: "blob", Path: f.Path, Size: f.Size, BlobID: f.Digest}
+			entries[i] = TreeEntry{Type: "file", Path: f.Path, Size: f.Size, BlobID: f.Digest}
 		}
 		jsonOK(w, entries)
 	}
@@ -104,6 +106,13 @@ func downloadFile(reg registry.ModelRegistry) http.HandlerFunc {
 		revision := chi.URLParam(r, "revision")
 		filePath := chi.URLParam(r, "*")
 
+		// Resolve descriptor to get commit hash and per-file digest for HF SDK headers.
+		desc, err := reg.Describe(r.Context(), modelID, revision)
+		if err != nil {
+			jsonError(w, statusFor(err), err)
+			return
+		}
+
 		rc, size, err := reg.OpenFile(r.Context(), modelID, revision, filePath)
 		if err != nil {
 			jsonError(w, statusFor(err), err)
@@ -111,12 +120,28 @@ func downloadFile(reg registry.ModelRegistry) http.HandlerFunc {
 		}
 		defer rc.Close()
 
+		// Find file digest for ETag.
+		var fileDigest string
+		for _, f := range desc.Files {
+			if f.Path == filePath {
+				fileDigest = f.Digest
+				break
+			}
+		}
+
+		// Headers required by the HF Hub SDK (hf_hub_download / get_hf_file_metadata).
+		w.Header().Set("X-Repo-Commit", desc.Version)
+		if fileDigest != "" {
+			w.Header().Set("ETag", `"`+fileDigest+`"`)
+		}
 		if size > 0 {
 			w.Header().Set("Content-Length", strconv.FormatInt(size, 10))
 		}
 		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename=%q`, filePath))
 		w.WriteHeader(http.StatusOK)
-		io.Copy(w, rc) //nolint:errcheck
+		if r.Method != http.MethodHead {
+			io.Copy(w, rc) //nolint:errcheck
+		}
 	}
 }
 

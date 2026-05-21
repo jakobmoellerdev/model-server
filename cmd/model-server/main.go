@@ -49,7 +49,6 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("create OCM client: %w", err)
 	}
-	defer ocmClient.Close()
 
 	modelReg, err := registry.NewOCMRegistry(ocmClient, cfg.OCM.IndexTTL, log)
 	if err != nil {

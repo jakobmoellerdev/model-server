@@ -4,15 +4,15 @@ components:
     provider:
       name: meta
     labels:
-      - name: ai.modelserver.io/model-id
+      - name: ext.ocm.software/model-server.model-id
         value: "meta-llama/Llama-3-8B-Instruct"
-      - name: ai.modelserver.io/task
+      - name: ext.ocm.software/model-server.task
         value: "text-generation"
-      - name: ai.modelserver.io/library
+      - name: ext.ocm.software/model-server.library
         value: "transformers"
-      - name: ai.modelserver.io/family
+      - name: ext.ocm.software/model-server.family
         value: "llama"
-      - name: ai.modelserver.io/license
+      - name: ext.ocm.software/model-server.license
         value: "llama3"
     resources:
       - name: weights
@@ -23,11 +23,11 @@ components:
           # Replace sha256 with actual digest of your model weights OCI artifact
           imageReference: ghcr.io/meta/llama-3-8b@sha256:0000000000000000000000000000000000000000000000000000000000000000
         labels:
-          - name: ai.modelserver.io/filename
+          - name: ext.ocm.software/model-server.filename
             value: "model.safetensors"
-          - name: ai.modelserver.io/format
+          - name: ext.ocm.software/model-server.format
             value: "safetensors"
-          - name: ai.modelserver.io/lfs
+          - name: ext.ocm.software/model-server.lfs
             value: "true"
 
       - name: config
@@ -38,7 +38,7 @@ components:
           localReference: "sha256:config-digest-placeholder"
           mediaType: "application/json"
         labels:
-          - name: ai.modelserver.io/filename
+          - name: ext.ocm.software/model-server.filename
             value: "config.json"
 
       - name: tokenizer
@@ -49,7 +49,7 @@ components:
           localReference: "sha256:tokenizer-digest-placeholder"
           mediaType: "application/json"
         labels:
-          - name: ai.modelserver.io/filename
+          - name: ext.ocm.software/model-server.filename
             value: "tokenizer.json"
 
       - name: model-card
@@ -60,5 +60,5 @@ components:
           localReference: "sha256:readme-digest-placeholder"
           mediaType: "text/markdown"
         labels:
-          - name: ai.modelserver.io/filename
+          - name: ext.ocm.software/model-server.filename
             value: "README.md"

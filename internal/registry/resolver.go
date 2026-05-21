@@ -51,11 +51,10 @@ func (r *OCMRegistry) Describe(ctx context.Context, modelID, version string) (*M
 	if err != nil {
 		return nil, err
 	}
-	cv, err := r.client.LookupVersion(compName, version)
+	cv, err := r.client.LookupVersion(ctx, compName, version)
 	if err != nil {
 		return nil, fmt.Errorf("lookup version: %w", err)
 	}
-	defer cv.Close()
 
 	info, err := ocmclient.ExtractInfo(cv, r.log)
 	if err != nil {
@@ -78,16 +77,11 @@ func (r *OCMRegistry) OpenFile(_ context.Context, modelID, revision, path string
 	if err != nil {
 		return nil, 0, err
 	}
-	cv, err := r.client.LookupVersion(compName, revision)
+	cv, err := r.client.LookupVersion(context.Background(), compName, revision)
 	if err != nil {
 		return nil, 0, fmt.Errorf("lookup version: %w", err)
 	}
-	rc, size, err := ocmclient.OpenResource(cv, path)
-	if err != nil {
-		cv.Close()
-		return nil, 0, err
-	}
-	return &cvReader{ReadCloser: rc, cv: cv}, size, nil
+	return ocmclient.OpenResource(cv, path)
 }
 
 func (r *OCMRegistry) Refresh(ctx context.Context) error {
@@ -102,13 +96,12 @@ func (r *OCMRegistry) buildIndex(ctx context.Context) error {
 
 	idx := newIndex()
 	for _, name := range names {
-		cv, err := r.client.LookupVersion(name, "")
+		cv, err := r.client.LookupVersion(ctx, name, "")
 		if err != nil {
 			r.log.Warn("skip component: cannot get version", slog.String("component", name), slog.Any("error", err))
 			continue
 		}
 		info, err := ocmclient.ExtractInfo(cv, r.log)
-		cv.Close()
 		if err != nil {
 			r.log.Warn("skip component: cannot extract info", slog.String("component", name), slog.Any("error", err))
 			continue
@@ -152,16 +145,3 @@ func infoToDescriptor(info *ocmclient.ComponentInfo) ModelDescriptor {
 	}
 }
 
-// cvReader closes the ComponentVersionAccess when the inner reader closes.
-type cvReader struct {
-	io.ReadCloser
-	cv interface{ Close() error }
-}
-
-func (c *cvReader) Close() error {
-	err := c.ReadCloser.Close()
-	if e2 := c.cv.Close(); err == nil {
-		err = e2
-	}
-	return err
-}

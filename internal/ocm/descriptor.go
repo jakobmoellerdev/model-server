@@ -1,17 +1,21 @@
-// Package ocm wraps the OCM SDK for model-server use.
-// It exposes ComponentInfo (label-derived metadata) and file access
-// without importing internal/registry, avoiding import cycles.
 package ocm
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"time"
 
-	"ocm.software/ocm/api/ocm"
-	metav1 "ocm.software/ocm/api/ocm/compdesc/meta/v1"
+	descriptor "ocm.software/open-component-model/bindings/go/descriptor/runtime"
+	"ocm.software/open-component-model/bindings/go/repository"
 )
+
+// ComponentVersion groups a descriptor with the repo it came from, for blob access.
+type ComponentVersion struct {
+	Descriptor *descriptor.Descriptor
+	repo       repository.ComponentVersionRepository
+}
 
 // ComponentInfo holds model metadata extracted from an OCM component version.
 type ComponentInfo struct {
@@ -41,25 +45,25 @@ type ModelFile struct {
 	IsLFS     bool
 }
 
-// ExtractInfo maps an OCM ComponentVersionAccess to a ComponentInfo using the
-// ai.modelserver.io/* label schema.
-func ExtractInfo(cv ocm.ComponentVersionAccess, log *slog.Logger) (*ComponentInfo, error) {
-	cd := cv.GetDescriptor()
-	labels := cd.Labels
+// ExtractInfo maps an OCM component descriptor to ComponentInfo using the
+// ext.ocm.software/model-server.* label schema.
+func ExtractInfo(cv ComponentVersion, log *slog.Logger) (*ComponentInfo, error) {
+	comp := cv.Descriptor.Component
+	labels := comp.Labels
 
 	modelID := labelString(labels, LabelModelID)
 	if modelID == "" {
 		return nil, fmt.Errorf("component %s/%s missing required label %s",
-			cd.Name, cd.Version, LabelModelID)
+			comp.Name, comp.Version, LabelModelID)
 	}
 
 	files := mapFiles(cv, log)
-	signed := len(cd.Signatures) > 0
+	signed := len(cv.Descriptor.Signatures) > 0
 
 	return &ComponentInfo{
 		ID:         modelID,
-		Component:  cd.Name,
-		Version:    cd.Version,
+		Component:  comp.Name,
+		Version:    comp.Version,
 		Task:       labelString(labels, LabelTask),
 		Library:    labelString(labels, LabelLibrary),
 		Family:     labelString(labels, LabelFamily),
@@ -71,42 +75,43 @@ func ExtractInfo(cv ocm.ComponentVersionAccess, log *slog.Logger) (*ComponentInf
 		Files:      files,
 		CreatedAt:  time.Now(),
 		ModifiedAt: time.Now(),
-		Digest:     cd.Name + "@" + cd.Version,
+		Digest:     comp.Name + "@" + comp.Version,
 	}, nil
 }
 
-func mapFiles(cv ocm.ComponentVersionAccess, log *slog.Logger) []ModelFile {
-	resources := cv.GetResources()
-	entries := make([]ModelFile, 0, len(resources))
+func mapFiles(cv ComponentVersion, log *slog.Logger) []ModelFile {
+	entries := make([]ModelFile, 0, len(cv.Descriptor.Component.Resources))
 
-	for _, r := range resources {
-		meta := r.Meta()
-		rlabels := meta.Labels
+	for i := range cv.Descriptor.Component.Resources {
+		r := &cv.Descriptor.Component.Resources[i]
+		rlabels := r.Labels
 
 		filename := labelString(rlabels, LabelFilename)
 		if filename == "" {
-			filename = meta.GetName()
+			filename = r.Name
 		}
 
 		mt := MediaTypeForFormat(labelString(rlabels, LabelFormat))
-		isLFS := labelBool(rlabels, LabelIsLFS) || meta.GetType() == ResourceTypeWeights
+		isLFS := labelBool(rlabels, LabelIsLFS) || r.Type == ResourceTypeWeights
 
 		var size int64
 		var digest string
-		if d := meta.Digest; d != nil {
-			digest = d.Value
+		if r.Digest != nil {
+			digest = r.Digest.Value
 		}
 
-		am, err := r.AccessMethod()
+		// Try to get size from the blob
+		b, _, err := cv.repo.GetLocalResource(
+			context.Background(),
+			cv.Descriptor.Component.Name,
+			cv.Descriptor.Component.Version,
+			r.ToIdentity(),
+		)
 		if err != nil {
-			log.Warn("cannot get access method", slog.String("resource", meta.GetName()), slog.Any("error", err))
-		} else {
-			ba := am.AsBlobAccess()
-			size = ba.Size()
-			if mt == "application/octet-stream" && am.MimeType() != "" {
-				mt = am.MimeType()
-			}
-			am.Close()
+			log.Debug("cannot get local resource for size probe",
+				slog.String("resource", r.Name), slog.Any("error", err))
+		} else if sa, ok := b.(interface{ Size() int64 }); ok {
+			size = sa.Size()
 		}
 
 		entries = append(entries, ModelFile{
@@ -120,30 +125,36 @@ func mapFiles(cv ocm.ComponentVersionAccess, log *slog.Logger) []ModelFile {
 	return entries
 }
 
-func labelString(labels metav1.Labels, name string) string {
-	var s string
-	if _, err := labels.GetValue(name, &s); err == nil {
-		return s
-	}
-	if idx := labels.GetIndex(name); idx >= 0 {
-		var raw json.RawMessage
-		if _, err := labels.GetValue(name, &raw); err == nil {
-			var v string
-			if err := json.Unmarshal(raw, &v); err == nil {
-				return v
+func labelString(labels []descriptor.Label, name string) string {
+	for i := range labels {
+		if labels[i].Name == name {
+			var s string
+			if err := json.Unmarshal(labels[i].Value, &s); err == nil {
+				return s
 			}
 		}
 	}
 	return ""
 }
 
-func labelBool(labels metav1.Labels, name string) bool {
-	var b bool
-	_, _ = labels.GetValue(name, &b)
-	return b
+func labelBool(labels []descriptor.Label, name string) bool {
+	for i := range labels {
+		if labels[i].Name == name {
+			var b bool
+			if err := json.Unmarshal(labels[i].Value, &b); err == nil {
+				return b
+			}
+			// also accept "true"/"false" string
+			var s string
+			if err := json.Unmarshal(labels[i].Value, &s); err == nil {
+				return s == "true"
+			}
+		}
+	}
+	return false
 }
 
-func allLabels(labels metav1.Labels) map[string]string {
+func allLabels(labels []descriptor.Label) map[string]string {
 	m := make(map[string]string, len(labels))
 	for _, l := range labels {
 		var s string

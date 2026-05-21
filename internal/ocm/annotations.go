@@ -1,17 +1,17 @@
 package ocm
 
 const (
-	LabelModelID   = "ai.modelserver.io/model-id"
-	LabelTask      = "ai.modelserver.io/task"
-	LabelLibrary   = "ai.modelserver.io/library"
-	LabelLicense   = "ai.modelserver.io/license"
-	LabelFamily    = "ai.modelserver.io/family"
-	LabelBaseModel = "ai.modelserver.io/base-model"
-	LabelGated     = "ai.modelserver.io/gated"
-	LabelPrivate   = "ai.modelserver.io/private"
-	LabelFilename  = "ai.modelserver.io/filename"
-	LabelFormat    = "ai.modelserver.io/format"
-	LabelIsLFS     = "ai.modelserver.io/lfs"
+	LabelModelID   = "ext.ocm.software/model-server.model-id"
+	LabelTask      = "ext.ocm.software/model-server.task"
+	LabelLibrary   = "ext.ocm.software/model-server.library"
+	LabelLicense   = "ext.ocm.software/model-server.license"
+	LabelFamily    = "ext.ocm.software/model-server.family"
+	LabelBaseModel = "ext.ocm.software/model-server.base-model"
+	LabelGated     = "ext.ocm.software/model-server.gated"
+	LabelPrivate   = "ext.ocm.software/model-server.private"
+	LabelFilename  = "ext.ocm.software/model-server.filename"
+	LabelFormat    = "ext.ocm.software/model-server.format"
+	LabelIsLFS     = "ext.ocm.software/model-server.lfs"
 
 	ResourceTypeWeights   = "modelWeights"
 	ResourceTypeConfig    = "modelConfig"

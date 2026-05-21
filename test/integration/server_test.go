@@ -1,7 +1,7 @@
 // Package integration tests the full server stack against an in-memory OCM repository.
-// It creates real OCM components with the ai.modelserver.io/* label schema,
-// starts an httptest.Server with the production router, and exercises both the
-// HuggingFace Hub and Ollama-compatible API endpoints.
+// It uses the new ocm.software/open-component-model/bindings/go/* modules to create
+// real OCM components, starts an httptest.Server with the production router, and exercises
+// both the HuggingFace Hub and Ollama-compatible API endpoints.
 package integration
 
 import (
@@ -13,15 +13,19 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	ocmapi "ocm.software/ocm/api/ocm"
-	metav1 "ocm.software/ocm/api/ocm/compdesc/meta/v1"
-	"ocm.software/ocm/api/ocm/extensions/repositories/composition"
-	"ocm.software/ocm/api/utils/blobaccess"
+	"ocm.software/open-component-model/bindings/go/blob/direct"
+	"ocm.software/open-component-model/bindings/go/blob/filesystem"
+	"ocm.software/open-component-model/bindings/go/ctf"
+	descriptor "ocm.software/open-component-model/bindings/go/descriptor/runtime"
+	v2 "ocm.software/open-component-model/bindings/go/descriptor/v2"
+	"ocm.software/open-component-model/bindings/go/oci"
+	ocictf "ocm.software/open-component-model/bindings/go/oci/ctf"
 
 	"github.com/open-component-model/model-server/internal/api/hfhub"
 	"github.com/open-component-model/model-server/internal/api/ollama"
@@ -45,7 +49,6 @@ license: apache-2.0
 A test model.`
 )
 
-// testRegistry wraps an OCM composition repo as a ModelRegistry via the real OCM client + resolver.
 type testSetup struct {
 	srv    *httptest.Server
 	client *http.Client
@@ -54,15 +57,10 @@ type testSetup struct {
 func newTestSetup(t *testing.T) *testSetup {
 	t.Helper()
 
-	ctx := ocmapi.DefaultContext()
+	repo, archive := newInMemRepo(t)
+	addTestComponent(t, repo)
 
-	// In-memory OCM repository (no disk, no network)
-	repo := composition.NewRepository(ctx)
-	t.Cleanup(func() { repo.Close() })
-
-	addTestComponent(t, ctx, repo)
-
-	reg := newInMemRegistry(t, repo)
+	reg := newInMemRegistry(t, repo, archive)
 
 	cfg := &config.Config{
 		Server: config.ServerConfig{Listen: ":0"},
@@ -112,7 +110,7 @@ func TestHFHub_ListModels(t *testing.T) {
 	assert.Equal(t, testModelID, models[0].ID)
 	assert.Equal(t, "text-generation", models[0].PipelineTag)
 	assert.Equal(t, "transformers", models[0].LibraryName)
-	assert.Equal(t, "apache-2.0", models[0].License)
+	assert.Equal(t, "apache-2.0", models[0].CardData.License)
 }
 
 func TestHFHub_ListModels_FilterByTask(t *testing.T) {
@@ -173,7 +171,7 @@ func TestHFHub_FileTree(t *testing.T) {
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&entries))
 	assert.Len(t, entries, 3)
 	for _, e := range entries {
-		assert.Equal(t, "blob", e.Type)
+		assert.Equal(t, "file", e.Type)
 	}
 }
 
@@ -187,6 +185,25 @@ func TestHFHub_DownloadFile(t *testing.T) {
 	body, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	assert.Equal(t, testConfig, string(body))
+
+	// HF SDK requires these headers from hf_hub_download / get_hf_file_metadata.
+	assert.NotEmpty(t, resp.Header.Get("X-Repo-Commit"), "X-Repo-Commit must be set")
+	assert.NotEmpty(t, resp.Header.Get("ETag"), "ETag must be set")
+	assert.NotEmpty(t, resp.Header.Get("Content-Length"), "Content-Length must be set")
+}
+
+func TestHFHub_DownloadFile_HEADHeaders(t *testing.T) {
+	ts := newTestSetup(t)
+
+	req, _ := http.NewRequest(http.MethodHead, ts.srv.URL+"/test-org/my-model/resolve/main/config.json", nil)
+	resp, err := ts.client.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.NotEmpty(t, resp.Header.Get("X-Repo-Commit"), "X-Repo-Commit must be set on HEAD")
+	assert.NotEmpty(t, resp.Header.Get("ETag"), "ETag must be set on HEAD")
+	assert.NotEmpty(t, resp.Header.Get("Content-Length"), "Content-Length must be set on HEAD")
 }
 
 func TestHFHub_DownloadFile_NotFound(t *testing.T) {
@@ -248,7 +265,6 @@ func TestOllama_Pull_StreamsProgress(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "application/x-ndjson", resp.Header.Get("Content-Type"))
 
-	// Read all NDJSON lines
 	var events []ollama.PullEvent
 	decoder := json.NewDecoder(resp.Body)
 	for {
@@ -300,66 +316,119 @@ func TestReadyz(t *testing.T) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-// addTestComponent creates a model component in the composition repo.
-func addTestComponent(t *testing.T, ctx ocmapi.Context, repo ocmapi.Repository) {
+// newInMemRepo creates an in-memory OCM repository backed by a temp-dir CTF.
+func newInMemRepo(t *testing.T) (*oci.Repository, ctf.CTF) {
 	t.Helper()
-
-	cv := composition.NewComponentVersion(ctx, testComponent, testVersion)
-	t.Cleanup(func() { cv.Close() })
-
-	// Set required labels on the component descriptor
-	cd := cv.GetDescriptor()
-	setLabel(t, &cd.Labels, ocmclient.LabelModelID, testModelID)
-	setLabel(t, &cd.Labels, ocmclient.LabelTask, "text-generation")
-	setLabel(t, &cd.Labels, ocmclient.LabelLibrary, "transformers")
-	setLabel(t, &cd.Labels, ocmclient.LabelFamily, "llama")
-	setLabel(t, &cd.Labels, ocmclient.LabelLicense, "apache-2.0")
-
-	// config.json
-	configMeta := ocmapi.NewResourceMeta("config", ocmclient.ResourceTypeConfig, metav1.LocalRelation)
-	configMeta.Labels = labelsFor(t, "config.json", "json")
-	require.NoError(t, cv.SetResourceBlob(configMeta,
-		blobaccess.ForString("application/json", testConfig), "", nil))
-
-	// model.safetensors (treated as weights → IsLFS=true)
-	weightsMeta := ocmapi.NewResourceMeta("weights", ocmclient.ResourceTypeWeights, metav1.LocalRelation)
-	weightsMeta.Labels = labelsFor(t, "model.safetensors", "safetensors")
-	require.NoError(t, cv.SetResourceBlob(weightsMeta,
-		blobaccess.ForString("application/x-safetensors", testWeights), "", nil))
-
-	// README.md
-	cardMeta := ocmapi.NewResourceMeta("model-card", ocmclient.ResourceTypeModelCard, metav1.LocalRelation)
-	cardMeta.Labels = labelsFor(t, "README.md", "markdown")
-	require.NoError(t, cv.SetResourceBlob(cardMeta,
-		blobaccess.ForString("text/markdown", testCard), "", nil))
-
-	require.NoError(t, repo.AddComponentVersion(cv))
+	fs, err := filesystem.NewFS(t.TempDir(), os.O_RDWR|os.O_CREATE)
+	require.NoError(t, err)
+	archive := ctf.NewFileSystemCTF(fs)
+	store := ocictf.NewFromCTF(archive)
+	repo, err := oci.NewRepository(
+		ocictf.WithCTF(store),
+		oci.WithCreator("integration-test"),
+		oci.WithTempDir(t.TempDir()),
+	)
+	require.NoError(t, err)
+	return repo, archive
 }
 
-func setLabel(t *testing.T, labels *metav1.Labels, name, value string) {
+// addTestComponent creates a model component in the repository.
+func addTestComponent(t *testing.T, repo *oci.Repository) {
 	t.Helper()
-	require.NoError(t, labels.SetValue(name, value))
+	ctx := t.Context()
+
+	// Build component descriptor with model labels
+	desc := &descriptor.Descriptor{
+		Meta: descriptor.Meta{Version: "v2"},
+		Component: descriptor.Component{
+			Provider: descriptor.Provider{Name: "test-org"},
+			ComponentMeta: descriptor.ComponentMeta{
+				ObjectMeta: descriptor.ObjectMeta{
+					Name:    testComponent,
+					Version: testVersion,
+					Labels:  componentLabels(t),
+				},
+			},
+		},
+	}
+
+	// config.json resource
+	configRes := resourceMeta("config", ocmclient.ResourceTypeConfig, "config.json", "json")
+	configContent := direct.NewFromBytes([]byte(testConfig))
+	newConfigRes, err := repo.AddLocalResource(ctx, testComponent, testVersion, &configRes, configContent)
+	require.NoError(t, err)
+	desc.Component.Resources = append(desc.Component.Resources, *newConfigRes)
+
+	// model.safetensors resource (weights)
+	weightsRes := resourceMeta("weights", ocmclient.ResourceTypeWeights, "model.safetensors", "safetensors")
+	weightsContent := direct.NewFromBytes([]byte(testWeights))
+	newWeightsRes, err := repo.AddLocalResource(ctx, testComponent, testVersion, &weightsRes, weightsContent)
+	require.NoError(t, err)
+	desc.Component.Resources = append(desc.Component.Resources, *newWeightsRes)
+
+	// README.md resource (model card)
+	cardRes := resourceMeta("model-card", ocmclient.ResourceTypeModelCard, "README.md", "markdown")
+	cardContent := direct.NewFromBytes([]byte(testCard))
+	newCardRes, err := repo.AddLocalResource(ctx, testComponent, testVersion, &cardRes, cardContent)
+	require.NoError(t, err)
+	desc.Component.Resources = append(desc.Component.Resources, *newCardRes)
+
+	require.NoError(t, repo.AddComponentVersion(ctx, desc))
 }
 
-func labelsFor(t *testing.T, filename, format string) metav1.Labels {
+func componentLabels(t *testing.T) []descriptor.Label {
 	t.Helper()
-	var lbls metav1.Labels
-	setLabel(t, &lbls, ocmclient.LabelFilename, filename)
-	setLabel(t, &lbls, ocmclient.LabelFormat, format)
-	return lbls
+	return []descriptor.Label{
+		mustLabel(t, ocmclient.LabelModelID, testModelID),
+		mustLabel(t, ocmclient.LabelTask, "text-generation"),
+		mustLabel(t, ocmclient.LabelLibrary, "transformers"),
+		mustLabel(t, ocmclient.LabelFamily, "llama"),
+		mustLabel(t, ocmclient.LabelLicense, "apache-2.0"),
+	}
 }
 
-// newInMemRegistry wires the composition repo into an OCMRegistry via a thin shim.
-func newInMemRegistry(t *testing.T, repo ocmapi.Repository) registry.ModelRegistry {
+func resourceMeta(name, resType, filename, format string) descriptor.Resource {
+	return descriptor.Resource{
+		ElementMeta: descriptor.ElementMeta{
+			ObjectMeta: descriptor.ObjectMeta{
+				Name:    name,
+				Version: testVersion,
+				Labels: []descriptor.Label{
+					{Name: ocmclient.LabelFilename, Value: mustJSON(filename)},
+					{Name: ocmclient.LabelFormat, Value: mustJSON(format)},
+				},
+			},
+		},
+		Type:     resType,
+		Relation: descriptor.LocalRelation,
+		Access: &v2.LocalBlob{
+			MediaType: ocmclient.MediaTypeForFormat(format),
+		},
+	}
+}
+
+func mustLabel(t *testing.T, name, value string) descriptor.Label {
+	t.Helper()
+	return descriptor.Label{Name: name, Value: mustJSON(value)}
+}
+
+func mustJSON(s string) json.RawMessage {
+	b, _ := json.Marshal(s)
+	return b
+}
+
+// newInMemRegistry wires the in-memory repo into an OCMRegistry.
+func newInMemRegistry(t *testing.T, repo *oci.Repository, archive ctf.CTF) registry.ModelRegistry {
 	t.Helper()
 
-	client := ocmclient.NewClientFromRepository(repo)
-	log := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	lister := ocictf.NewComponentLister(archive)
+	client := ocmclient.NewClientFromRepository(repo, lister)
+	log := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelWarn}))
 	reg, err := registry.NewOCMRegistry(client, 0, log)
 	require.NoError(t, err)
 	return reg
 }
 
-// Ensure the server runs without errors
+// suppress unused import warnings
 var _ = fmt.Sprintf
-var _ = slog.Default
+var _ = strings.Contains

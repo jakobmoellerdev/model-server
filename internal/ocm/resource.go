@@ -1,55 +1,52 @@
 package ocm
 
 import (
+	"context"
 	"fmt"
 	"io"
 
-	"ocm.software/ocm/api/ocm"
+	"ocm.software/open-component-model/bindings/go/repository"
+	"ocm.software/open-component-model/bindings/go/runtime"
 )
 
 // OpenResource returns a streaming reader for a named file within a component version.
+// It matches by the ext.ocm.software/model-server.filename label or by resource name.
 // Caller must close the returned ReadCloser.
-func OpenResource(cv ocm.ComponentVersionAccess, resourceName string) (io.ReadCloser, int64, error) {
-	for _, r := range cv.GetResources() {
-		filename := labelString(r.Meta().Labels, LabelFilename)
+func OpenResource(cv ComponentVersion, resourceName string) (io.ReadCloser, int64, error) {
+	comp := cv.Descriptor.Component
+	for i := range comp.Resources {
+		r := &comp.Resources[i]
+		filename := labelString(r.Labels, LabelFilename)
 		if filename == "" {
-			filename = r.Meta().GetName()
+			filename = r.Name
 		}
-		if filename != resourceName && r.Meta().GetName() != resourceName {
+		if filename != resourceName && r.Name != resourceName {
 			continue
 		}
-		return openReader(r)
+		return openReader(cv.repo, comp.Name, comp.Version, r.ToIdentity())
 	}
 	return nil, 0, fmt.Errorf("resource %q not found in component version", resourceName)
 }
 
-func openReader(r ocm.ResourceAccess) (io.ReadCloser, int64, error) {
-	am, err := r.AccessMethod()
+func openReader(
+	repo repository.ComponentVersionRepository,
+	component, version string,
+	identity runtime.Identity,
+) (io.ReadCloser, int64, error) {
+	b, _, err := repo.GetLocalResource(context.Background(), component, version, identity)
 	if err != nil {
-		return nil, 0, fmt.Errorf("access method: %w", err)
+		return nil, 0, fmt.Errorf("get local resource: %w", err)
 	}
 
-	size := am.AsBlobAccess().Size()
+	var size int64 = -1
+	if sa, ok := b.(interface{ Size() int64 }); ok {
+		size = sa.Size()
+	}
 
-	reader, err := am.Reader()
+	rc, err := b.ReadCloser()
 	if err != nil {
-		am.Close()
-		return nil, 0, fmt.Errorf("get reader: %w", err)
+		return nil, 0, fmt.Errorf("open blob reader: %w", err)
 	}
 
-	return &closerChain{ReadCloser: reader, extra: am.Close}, size, nil
-}
-
-// closerChain closes an extra cleanup func after closing the inner ReadCloser.
-type closerChain struct {
-	io.ReadCloser
-	extra func() error
-}
-
-func (c *closerChain) Close() error {
-	err := c.ReadCloser.Close()
-	if e2 := c.extra(); err == nil {
-		err = e2
-	}
-	return err
+	return rc, size, nil
 }
