@@ -41,6 +41,7 @@ jobs:
         working-directory: examples/component
         run: |
           ocm add componentversions \
+            --create \
             --file ./transport-archive \
             component-constructor.yaml
 
