@@ -19,6 +19,9 @@ import (
 	"github.com/open-component-model/model-server/internal/server"
 )
 
+// version is injected at build time via -ldflags "-X main.version=v0.1.0".
+var version = "dev"
+
 func main() {
 	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
@@ -36,6 +39,7 @@ func run() error {
 
 	log := observability.NewLogger(*logLevel, *logFormat)
 	slog.SetDefault(log)
+	log.Info("starting model-server", "version", version)
 
 	cfg, err := config.Load(*configPath)
 	if err != nil {

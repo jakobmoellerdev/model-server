@@ -1,0 +1,14 @@
+{
+  "model_type": "tiny-gpt",
+  "architectures": ["TinyGPTForCausalLM"],
+  "vocab_size": 256,
+  "hidden_size": 64,
+  "num_hidden_layers": 2,
+  "num_attention_heads": 2,
+  "intermediate_size": 128,
+  "max_position_embeddings": 128,
+  "bos_token_id": 1,
+  "eos_token_id": 2,
+  "torch_dtype": "float32",
+  "transformers_version": "4.40.0"
+}

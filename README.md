@@ -58,6 +58,16 @@ credentials:
     password: ${GHCR_TOKEN}
 ```
 
+For the published sample component (`example-org/tiny-model`):
+
+```yaml
+ocm:
+  repositories:
+    - name: sample
+      type: OCIRegistry
+      url: ghcr.io/jakobmoellerdev/model-server/models
+```
+
 For a local CTF archive (useful for testing):
 
 ```yaml
@@ -358,7 +368,16 @@ task lint
 
 ## Further Reading
 
-- `docs/architecture.md` — system architecture and component diagrams
+- `docs/architecture.md` — system architecture, diagrams, and full API reference
 - `docs/proposal.md` — design rationale and OCM mapping
-- `examples/component/component-constructor.yaml` — full OCM component definition
+- `examples/usage/` — runnable usage scripts for every API surface
+  - [`hfhub.py`](examples/usage/hfhub.py) — Hugging Face Python SDK
+  - [`ollama.sh`](examples/usage/ollama.sh) — Ollama CLI
+  - [`openai.py`](examples/usage/openai.py) — OpenAI Python SDK
+  - [`mlflow.py`](examples/usage/mlflow.py) — MLflow Python client
+  - [`curl.sh`](examples/usage/curl.sh) — curl for all four APIs
+- `examples/component/` — sample OCM component (`example-org/tiny-model`)
+  - [`component-constructor.yaml`](examples/component/component-constructor.yaml) — OCM component definition
+  - [`push-sample.sh`](examples/component/push-sample.sh) — build CTF + push to GHCR
+  - Published at: `ghcr.io/jakobmoellerdev/model-server/models`
 - `examples/config/model-server.yaml` — full server configuration reference

@@ -1,42 +1,40 @@
 components:
-  - name: github.com/meta/llama-3-8b-instruct
+  - name: github.com/jakobmoellerdev/model-server/models/tiny-model
     version: 1.0.0
     provider:
-      name: meta
+      name: jakobmoellerdev
     labels:
       - name: ext.ocm.software/model-server.model-id
-        value: "meta-llama/Llama-3-8B-Instruct"
+        value: "example-org/tiny-model"
       - name: ext.ocm.software/model-server.task
         value: "text-generation"
       - name: ext.ocm.software/model-server.library
         value: "transformers"
       - name: ext.ocm.software/model-server.family
-        value: "llama"
+        value: "tiny-gpt"
       - name: ext.ocm.software/model-server.license
-        value: "llama3"
+        value: "cc0-1.0"
     resources:
       - name: weights
         type: modelWeights
-        relation: external
-        access:
-          type: ociBlob
-          # Replace sha256 with actual digest of your model weights OCI artifact
-          imageReference: ghcr.io/meta/llama-3-8b@sha256:0000000000000000000000000000000000000000000000000000000000000000
+        relation: local
+        input:
+          type: file
+          path: tiny-model/weights.bin
+          mediaType: application/octet-stream
         labels:
           - name: ext.ocm.software/model-server.filename
-            value: "model.safetensors"
+            value: "weights.bin"
           - name: ext.ocm.software/model-server.format
-            value: "safetensors"
-          - name: ext.ocm.software/model-server.lfs
-            value: "true"
+            value: "bin"
 
       - name: config
         type: modelConfig
         relation: local
-        access:
-          type: localBlob
-          localReference: "sha256:config-digest-placeholder"
-          mediaType: "application/json"
+        input:
+          type: file
+          path: tiny-model/config.json
+          mediaType: application/json
         labels:
           - name: ext.ocm.software/model-server.filename
             value: "config.json"
@@ -44,10 +42,10 @@ components:
       - name: tokenizer
         type: tokenizer
         relation: local
-        access:
-          type: localBlob
-          localReference: "sha256:tokenizer-digest-placeholder"
-          mediaType: "application/json"
+        input:
+          type: file
+          path: tiny-model/tokenizer.json
+          mediaType: application/json
         labels:
           - name: ext.ocm.software/model-server.filename
             value: "tokenizer.json"
@@ -55,10 +53,10 @@ components:
       - name: model-card
         type: modelCard
         relation: local
-        access:
-          type: localBlob
-          localReference: "sha256:readme-digest-placeholder"
-          mediaType: "text/markdown"
+        input:
+          type: file
+          path: tiny-model/README.md
+          mediaType: text/markdown
         labels:
           - name: ext.ocm.software/model-server.filename
             value: "README.md"
