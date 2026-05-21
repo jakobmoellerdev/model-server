@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 700" width="960" height="700">
+  <style>
+    text { font-family: "Courier New","Lucida Console",monospace; fill: #caf0f8; }
+  </style>
+  <defs>
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#112240" stroke-width="0.5"/>
+    </pattern>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#00b4d8"/>
+    </marker>
+    <marker id="arr-grn" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#06d6a0"/>
+    </marker>
+    <marker id="arr-org" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#f77f00"/>
+    </marker>
+  </defs>
+  <rect width="960" height="700" fill="#0a1628"/>
+  <rect width="960" height="700" fill="url(#grid)" opacity="0.6"/>
+  <text x="480" y="32" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff" letter-spacing="2">DATA MODEL — OCM Component → ModelDescriptor</text>
+  <rect x="20" y="55" width="390" height="595" rx="2" fill="none" stroke="#48cae4" stroke-width="1" stroke-dasharray="5,3"/>
+  <text x="30" y="72" font-size="10" fill="#48cae4" letter-spacing="1">OCM COMPONENT (stored in OCI registry)</text>
+  <rect x="35" y="83" width="360" height="90" rx="2" fill="#0d1f3c" stroke="#48cae4" stroke-width="1"/>
+  <text x="215" y="104" text-anchor="middle" font-size="12" font-weight="700" fill="#ffffff">descriptor.Descriptor</text>
+  <text x="215" y="122" text-anchor="middle" font-size="10" fill="#90e0ef">name:     github.com/org/model-name</text>
+  <text x="215" y="138" text-anchor="middle" font-size="10" fill="#90e0ef">version:  1.0.0</text>
+  <text x="215" y="154" text-anchor="middle" font-size="10" fill="#90e0ef">provider: {name: "org"}</text>
+  <text x="215" y="166" text-anchor="middle" font-size="10" fill="#48cae4">signatures: []  ← Signed=true if present</text>
+  <rect x="35" y="190" width="360" height="180" rx="2" fill="#0d1f3c" stroke="#f77f00" stroke-width="1"/>
+  <text x="215" y="210" text-anchor="middle" font-size="11" font-weight="700" fill="#f77f00">Component Labels  (ai.modelserver.io/*)</text>
+  <line x1="35" y1="216" x2="395" y2="216" stroke="#f77f00" stroke-width="0.5"/>
+  <text x="50" y="234" font-size="10" fill="#ffffff">ai.modelserver.io/model-id</text>
+  <text x="290" y="234" font-size="10" fill="#06d6a0">REQUIRED</text>
+  <text x="50" y="250" font-size="10" fill="#90e0ef">  → "meta-llama/Llama-3-8B"</text>
+  <text x="50" y="268" font-size="10" fill="#ffffff">ai.modelserver.io/task</text>
+  <text x="290" y="268" font-size="10" fill="#06d6a0">REQUIRED</text>
+  <text x="50" y="284" font-size="10" fill="#90e0ef">  → "text-generation"</text>
+  <text x="50" y="302" font-size="10" fill="#90e0ef">ai.modelserver.io/library   → "transformers"</text>
+  <text x="50" y="318" font-size="10" fill="#90e0ef">ai.modelserver.io/license   → "apache-2.0"</text>
+  <text x="50" y="334" font-size="10" fill="#90e0ef">ai.modelserver.io/family    → "llama"</text>
+  <text x="50" y="350" font-size="10" fill="#90e0ef">ai.modelserver.io/gated     → false</text>
+  <text x="50" y="366" font-size="10" fill="#90e0ef">ai.modelserver.io/private   → false</text>
+  <rect x="35" y="388" width="360" height="245" rx="2" fill="#0d1f3c" stroke="#48cae4" stroke-width="1"/>
+  <text x="215" y="408" text-anchor="middle" font-size="11" font-weight="700" fill="#48cae4">Resources  []descriptor.Resource</text>
+  <line x1="35" y1="414" x2="395" y2="414" stroke="#48cae4" stroke-width="0.5"/>
+  <rect x="48" y="416" width="333" height="40" rx="1" fill="#0a2040" stroke="#112240" stroke-width="1"/>
+  <text x="58" y="432" font-size="10" fill="#ffffff">weights</text>
+  <text x="130" y="432" font-size="10" fill="#48cae4">modelWeights</text>
+  <text x="260" y="432" font-size="10" fill="#90e0ef">model.safetensors</text>
+  <text x="58" y="448" font-size="9" fill="#90e0ef">  relation: local   access: LocalBlob   format: safetensors</text>
+  <text x="58" y="458" font-size="9" fill="#48cae4">  labels: ai.../filename, ai.../format, ai.../lfs</text>
+  <rect x="48" y="466" width="333" height="40" rx="1" fill="#0a2040" stroke="#112240" stroke-width="1"/>
+  <text x="58" y="482" font-size="10" fill="#ffffff">config</text>
+  <text x="130" y="482" font-size="10" fill="#48cae4">modelConfig</text>
+  <text x="260" y="482" font-size="10" fill="#90e0ef">config.json</text>
+  <text x="58" y="498" font-size="9" fill="#90e0ef">  relation: local   access: LocalBlob   format: json</text>
+  <text x="58" y="508" font-size="9" fill="#48cae4">  labels: ai.../filename, ai.../format, ai.../lfs</text>
+  <rect x="48" y="516" width="333" height="40" rx="1" fill="#0a2040" stroke="#112240" stroke-width="1"/>
+  <text x="58" y="532" font-size="10" fill="#ffffff">tokenizer</text>
+  <text x="130" y="532" font-size="10" fill="#48cae4">tokenizer</text>
+  <text x="260" y="532" font-size="10" fill="#90e0ef">tokenizer.json</text>
+  <text x="58" y="548" font-size="9" fill="#90e0ef">  relation: local   access: LocalBlob   format: json</text>
+  <text x="58" y="558" font-size="9" fill="#48cae4">  labels: ai.../filename, ai.../format, ai.../lfs</text>
+  <rect x="48" y="566" width="333" height="40" rx="1" fill="#0a2040" stroke="#112240" stroke-width="1"/>
+  <text x="58" y="582" font-size="10" fill="#ffffff">model-card</text>
+  <text x="130" y="582" font-size="10" fill="#48cae4">modelCard</text>
+  <text x="260" y="582" font-size="10" fill="#90e0ef">README.md</text>
+  <text x="58" y="598" font-size="9" fill="#90e0ef">  relation: local   access: LocalBlob   format: markdown</text>
+  <text x="58" y="608" font-size="9" fill="#48cae4">  labels: ai.../filename, ai.../format, ai.../lfs</text>
+  <rect x="412" y="210" width="135" height="40" rx="2" fill="#0a2040" stroke="#06d6a0" stroke-width="1"/>
+  <text x="480" y="226" text-anchor="middle" font-size="10" font-weight="700" fill="#06d6a0">ExtractInfo(cv)</text>
+  <text x="480" y="242" text-anchor="middle" font-size="9" fill="#90e0ef">ocm/descriptor.go</text>
+  <polyline points="395,230 412,230" fill="none" stroke="#06d6a0" stroke-width="1.5" marker-end="url(#arr-grn)"/>
+  <polyline points="547,230 555,230 555,247 570,247" fill="none" stroke="#06d6a0" stroke-width="1.5" marker-end="url(#arr-grn)"/>
+  <rect x="412" y="480" width="135" height="40" rx="2" fill="#0a2040" stroke="#00b4d8" stroke-width="1"/>
+  <text x="480" y="496" text-anchor="middle" font-size="10" font-weight="700" fill="#00b4d8">mapFiles(cv)</text>
+  <text x="480" y="512" text-anchor="middle" font-size="9" fill="#90e0ef">per resource</text>
+  <polyline points="395,500 412,500" fill="none" stroke="#00b4d8" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polyline points="547,500 555,500 555,530 570,530" fill="none" stroke="#00b4d8" stroke-width="1.5" marker-end="url(#arr)"/>
+  <rect x="550" y="55" width="390" height="595" rx="2" fill="none" stroke="#06d6a0" stroke-width="1" stroke-dasharray="5,3"/>
+  <text x="560" y="72" font-size="10" fill="#06d6a0" letter-spacing="1">MODEL-SERVER TYPES  (internal/registry/types.go)</text>
+  <rect x="565" y="83" width="360" height="350" rx="2" fill="#0d1f3c" stroke="#06d6a0" stroke-width="1"/>
+  <text x="745" y="104" text-anchor="middle" font-size="12" font-weight="700" fill="#ffffff">ModelDescriptor</text>
+  <line x1="565" y1="110" x2="925" y2="110" stroke="#06d6a0" stroke-width="0.5"/>
+  <text x="578" y="128" font-size="10" fill="#06d6a0">ID</text>
+  <text x="660" y="128" font-size="10" fill="#48cae4">string</text>
+  <text x="790" y="128" font-size="9" fill="#90e0ef">// meta-llama/Llama-3-8B</text>
+  <text x="578" y="148" font-size="10" fill="#90e0ef">Component</text>
+  <text x="660" y="148" font-size="10" fill="#48cae4">string</text>
+  <text x="790" y="148" font-size="9" fill="#90e0ef">// github.com/org/model</text>
+  <text x="578" y="168" font-size="10" fill="#90e0ef">Version</text>
+  <text x="660" y="168" font-size="10" fill="#48cae4">string</text>
+  <text x="790" y="168" font-size="9" fill="#90e0ef">// 1.0.0</text>
+  <text x="578" y="188" font-size="10" fill="#90e0ef">Task</text>
+  <text x="660" y="188" font-size="10" fill="#48cae4">string</text>
+  <text x="790" y="188" font-size="9" fill="#90e0ef">// text-generation</text>
+  <text x="578" y="208" font-size="10" fill="#90e0ef">Library</text>
+  <text x="660" y="208" font-size="10" fill="#48cae4">string</text>
+  <text x="790" y="208" font-size="9" fill="#90e0ef">// transformers</text>
+  <text x="578" y="228" font-size="10" fill="#90e0ef">Family</text>
+  <text x="660" y="228" font-size="10" fill="#48cae4">string</text>
+  <text x="790" y="228" font-size="9" fill="#90e0ef">// llama</text>
+  <text x="578" y="248" font-size="10" fill="#90e0ef">License</text>
+  <text x="660" y="248" font-size="10" fill="#48cae4">string</text>
+  <text x="790" y="248" font-size="9" fill="#90e0ef">// apache-2.0</text>
+  <text x="578" y="268" font-size="10" fill="#90e0ef">Gated</text>
+  <text x="660" y="268" font-size="10" fill="#48cae4">bool</text>
+  <text x="790" y="268" font-size="9" fill="#90e0ef">// false</text>
+  <text x="578" y="288" font-size="10" fill="#90e0ef">Private</text>
+  <text x="660" y="288" font-size="10" fill="#48cae4">bool</text>
+  <text x="790" y="288" font-size="9" fill="#90e0ef">// false</text>
+  <text x="578" y="308" font-size="10" fill="#f77f00">Signed</text>
+  <text x="660" y="308" font-size="10" fill="#48cae4">bool</text>
+  <text x="790" y="308" font-size="9" fill="#90e0ef">// true if signatures>0</text>
+  <text x="578" y="328" font-size="10" fill="#90e0ef">Labels</text>
+  <text x="660" y="328" font-size="10" fill="#48cae4">map[string]string</text>
+  <text x="790" y="328" font-size="9" fill="#90e0ef">// all labels</text>
+  <text x="578" y="348" font-size="10" fill="#00b4d8">Files</text>
+  <text x="660" y="348" font-size="10" fill="#48cae4">[]FileEntry</text>
+  <text x="790" y="348" font-size="9" fill="#90e0ef">// see below</text>
+  <text x="578" y="368" font-size="10" fill="#48cae4">CreatedAt</text>
+  <text x="660" y="368" font-size="10" fill="#48cae4">time.Time</text>
+  <text x="790" y="368" font-size="9" fill="#90e0ef">// now()</text>
+  <text x="578" y="388" font-size="10" fill="#48cae4">Digest</text>
+  <text x="660" y="388" font-size="10" fill="#48cae4">string</text>
+  <text x="790" y="388" font-size="9" fill="#90e0ef">// name@version</text>
+  <rect x="565" y="452" width="360" height="180" rx="2" fill="#0d1f3c" stroke="#00b4d8" stroke-width="1"/>
+  <text x="745" y="473" text-anchor="middle" font-size="12" font-weight="700" fill="#ffffff">FileEntry</text>
+  <line x1="565" y1="479" x2="925" y2="479" stroke="#00b4d8" stroke-width="0.5"/>
+  <text x="578" y="497" font-size="10" fill="#00b4d8">Path</text>
+  <text x="660" y="497" font-size="10" fill="#48cae4">string</text>
+  <text x="790" y="497" font-size="9" fill="#90e0ef">// "model.safetensors"</text>
+  <text x="578" y="521" font-size="10" fill="#00b4d8">Size</text>
+  <text x="660" y="521" font-size="10" fill="#48cae4">int64</text>
+  <text x="790" y="521" font-size="9" fill="#90e0ef">// bytes from blob</text>
+  <text x="578" y="545" font-size="10" fill="#00b4d8">Digest</text>
+  <text x="660" y="545" font-size="10" fill="#48cae4">string</text>
+  <text x="790" y="545" font-size="9" fill="#90e0ef">// "sha256:..."</text>
+  <text x="578" y="569" font-size="10" fill="#00b4d8">MediaType</text>
+  <text x="660" y="569" font-size="10" fill="#48cae4">string</text>
+  <text x="790" y="569" font-size="9" fill="#90e0ef">// "application/x-safetensors"</text>
+  <text x="578" y="593" font-size="10" fill="#00b4d8">IsLFS</text>
+  <text x="660" y="593" font-size="10" fill="#48cae4">bool</text>
+  <text x="790" y="593" font-size="9" fill="#90e0ef">// true for weights (large file)</text>
+  <polyline points="745,433 745,452" fill="none" stroke="#00b4d8" stroke-width="1.5" marker-end="url(#arr)"/>
+  <rect x="750" y="438" width="58" height="13" rx="1" fill="#0a1628" opacity="0.9"/>
+  <text x="779" y="448" text-anchor="middle" font-size="9" fill="#00b4d8">[]FileEntry</text>
+  <rect x="630" y="627" width="305" height="56" rx="2" fill="#0d1f3c" stroke="#00b4d8" stroke-width="1"/>
+  <line x1="630" y1="643" x2="935" y2="643" stroke="#00b4d8" stroke-width="0.5"/>
+  <text x="783" y="639" text-anchor="middle" font-size="9" fill="#caf0f8" letter-spacing="1">DIAGRAM 4 / 4</text>
+  <text x="783" y="660" text-anchor="middle" font-size="12" font-weight="700" fill="#00b4d8">DATA MODEL</text>
+  <text x="783" y="675" text-anchor="middle" font-size="10" fill="#90e0ef">OCM Component → ModelDescriptor mapping</text>
+</svg>
