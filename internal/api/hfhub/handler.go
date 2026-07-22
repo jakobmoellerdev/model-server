@@ -16,17 +16,15 @@ import (
 // MountRoutes registers all HF Hub-compatible routes on the given router.
 // Routes are registered directly to avoid conflicts with /api prefix used by Ollama.
 func MountRoutes(r chi.Router, reg registry.ModelRegistry) {
-	// Model discovery
+	// Model discovery — wildcard captures multi-segment model IDs
 	r.Get("/api/models", listModels(reg))
-	r.Get("/api/models/{owner}/{model}/tree/{revision}", fileTree(reg))
-	r.Get("/api/models/{owner}/{model}", modelInfoOwner(reg))
-	r.Get("/api/models/{model}", modelInfoSingle(reg))
+	r.Get("/api/models/*", modelInfoOrTree(reg))
 
-	// File downloads — GET streams the blob, HEAD returns metadata only
-	r.Get("/{owner}/{model}/resolve/{revision}/*", downloadFile(reg))
-	r.Head("/{owner}/{model}/resolve/{revision}/*", downloadFile(reg))
-	r.Get("/{owner}/{model}/raw/{revision}/*", downloadFile(reg))
-	r.Head("/{owner}/{model}/raw/{revision}/*", downloadFile(reg))
+	// File downloads — catch-all; handler splits on /resolve/ or /raw/ to extract
+	// the model ID, which may itself contain slashes.
+	dl := downloadFileWild(reg)
+	r.Get("/*", dl)
+	r.Head("/*", dl)
 }
 
 // NewHandler returns an http.Handler for all HF Hub-compatible routes.
@@ -61,52 +59,54 @@ func listModels(reg registry.ModelRegistry) http.HandlerFunc {
 	}
 }
 
-func modelInfoOwner(reg registry.ModelRegistry) http.HandlerFunc {
+func modelInfoOrTree(reg registry.ModelRegistry) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		serveModelInfo(w, r, reg, chi.URLParam(r, "owner")+"/"+chi.URLParam(r, "model"))
-	}
-}
-
-func modelInfoSingle(reg registry.ModelRegistry) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		serveModelInfo(w, r, reg, chi.URLParam(r, "model"))
-	}
-}
-
-func serveModelInfo(w http.ResponseWriter, r *http.Request, reg registry.ModelRegistry, modelID string) {
-	desc, err := reg.Describe(r.Context(), modelID, "")
-	if err != nil {
-		jsonError(w, statusFor(err), err)
-		return
-	}
-	jsonOK(w, toModelInfo(*desc))
-}
-
-func fileTree(reg registry.ModelRegistry) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		modelID := chi.URLParam(r, "owner") + "/" + chi.URLParam(r, "model")
-		revision := chi.URLParam(r, "revision")
-
-		files, err := reg.ListFiles(r.Context(), modelID, revision)
-		if err != nil {
-			jsonError(w, statusFor(err), err)
+		wild := chi.URLParam(r, "*") // everything after /api/models/
+		// detect .../tree/{revision}
+		if idx := strings.Index(wild, "/tree/"); idx != -1 {
+			modelID := wild[:idx]
+			revision := wild[idx+len("/tree/"):]
+			files, err := reg.ListFiles(r.Context(), modelID, revision)
+			if err != nil {
+				jsonError(w, statusFor(err), err)
+				return
+			}
+			entries := make([]TreeEntry, len(files))
+			for i, f := range files {
+				entries[i] = TreeEntry{Type: "file", Path: f.Path, Size: f.Size, BlobID: f.Digest}
+			}
+			jsonOK(w, entries)
 			return
 		}
-		entries := make([]TreeEntry, len(files))
-		for i, f := range files {
-			entries[i] = TreeEntry{Type: "file", Path: f.Path, Size: f.Size, BlobID: f.Digest}
-		}
-		jsonOK(w, entries)
+		serveModelInfo(w, r, reg, wild)
 	}
 }
 
-func downloadFile(reg registry.ModelRegistry) http.HandlerFunc {
+// downloadFileWild extracts the model ID from the raw request path by splitting on
+// "/resolve/" or "/raw/", since the model ID may contain slashes.
+func downloadFileWild(reg registry.ModelRegistry) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		modelID := chi.URLParam(r, "owner") + "/" + chi.URLParam(r, "model")
-		revision := chi.URLParam(r, "revision")
-		filePath := chi.URLParam(r, "*")
+		path := r.URL.Path // e.g. /github.com/org/repo/resolve/main/config.json
 
-		// Resolve descriptor to get commit hash and per-file digest for HF SDK headers.
+		var modelID, revision, filePath string
+		for _, sep := range []string{"/resolve/", "/raw/"} {
+			if idx := strings.Index(path, sep); idx != -1 {
+				modelID = strings.TrimPrefix(path[:idx], "/")
+				rest := path[idx+len(sep):]
+				if slash := strings.Index(rest, "/"); slash != -1 {
+					revision = rest[:slash]
+					filePath = rest[slash+1:]
+				} else {
+					revision = rest
+				}
+				break
+			}
+		}
+		if modelID == "" {
+			http.NotFound(w, r)
+			return
+		}
+
 		desc, err := reg.Describe(r.Context(), modelID, revision)
 		if err != nil {
 			jsonError(w, statusFor(err), err)
@@ -120,7 +120,6 @@ func downloadFile(reg registry.ModelRegistry) http.HandlerFunc {
 		}
 		defer rc.Close() //nolint:errcheck
 
-		// Find file digest for ETag.
 		var fileDigest string
 		for _, f := range desc.Files {
 			if f.Path == filePath {
@@ -129,7 +128,6 @@ func downloadFile(reg registry.ModelRegistry) http.HandlerFunc {
 			}
 		}
 
-		// Headers required by the HF Hub SDK (hf_hub_download / get_hf_file_metadata).
 		w.Header().Set("X-Repo-Commit", desc.Version)
 		if fileDigest != "" {
 			w.Header().Set("ETag", `"`+fileDigest+`"`)
@@ -143,6 +141,15 @@ func downloadFile(reg registry.ModelRegistry) http.HandlerFunc {
 			io.Copy(w, rc) //nolint:errcheck
 		}
 	}
+}
+
+func serveModelInfo(w http.ResponseWriter, r *http.Request, reg registry.ModelRegistry, modelID string) {
+	desc, err := reg.Describe(r.Context(), modelID, "")
+	if err != nil {
+		jsonError(w, statusFor(err), err)
+		return
+	}
+	jsonOK(w, toModelInfo(*desc))
 }
 
 func statusFor(err error) int {

@@ -14,8 +14,7 @@ import (
 // MountRoutes registers all OpenAI-compatible routes on r.
 func MountRoutes(r chi.Router, reg registry.ModelRegistry) {
 	r.Get("/v1/models", listModels(reg))
-	r.Get("/v1/models/{owner}/{model}", getModel(reg))
-	r.Get("/v1/models/{model}", getModel(reg))
+	r.Get("/v1/models/*", getModel(reg))
 }
 
 func listModels(reg registry.ModelRegistry) http.HandlerFunc {
@@ -45,14 +44,10 @@ func getModel(reg registry.ModelRegistry) http.HandlerFunc {
 	}
 }
 
-// resolveModelID reconstructs the model ID from URL params, supporting both
-// /v1/models/{model} (single segment) and /v1/models/{owner}/{model} (two segments).
-// Single-segment form also accepts URL-encoded slashes (e.g. "owner%2Fmodel").
+// resolveModelID extracts the model ID from the wildcard path param.
+// Also handles URL-encoded slashes (e.g. "owner%2Fmodel").
 func resolveModelID(r *http.Request) string {
-	if owner := chi.URLParam(r, "owner"); owner != "" {
-		return owner + "/" + chi.URLParam(r, "model")
-	}
-	raw := chi.URLParam(r, "model")
+	raw := chi.URLParam(r, "*")
 	if decoded, err := url.QueryUnescape(raw); err == nil {
 		return decoded
 	}
