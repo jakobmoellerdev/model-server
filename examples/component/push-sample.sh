@@ -22,7 +22,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET="${TARGET:-ghcr.io/jakobmoellerdev/model-server/models}"
-COMPONENT="example-org/tiny-model"
+COMPONENT="example.org/tiny-model"
 VERSION="1.0.0"
 ARCHIVE="$SCRIPT_DIR/transport-archive"
 

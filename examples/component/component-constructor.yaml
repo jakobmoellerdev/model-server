@@ -1,5 +1,5 @@
 components:
-  - name: example-org/tiny-model
+  - name: example.org/tiny-model
     version: 1.0.0
     provider:
       name: example-org
