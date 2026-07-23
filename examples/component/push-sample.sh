@@ -31,8 +31,9 @@ cd "$SCRIPT_DIR"
 echo "=== Building OCM component archive ==="
 rm -rf "$ARCHIVE"
 ocm add componentversions \
-  --repository "ctf::$ARCHIVE" \
-  --constructor component-constructor.yaml
+  --create \
+  --file "./$ARCHIVE" \
+  component-constructor.yaml
 echo "Built: $ARCHIVE"
 echo
 
