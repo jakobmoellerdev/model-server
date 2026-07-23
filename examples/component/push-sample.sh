@@ -32,7 +32,7 @@ echo "=== Building OCM component archive ==="
 rm -rf "$ARCHIVE"
 ocm add componentversions \
   --create \
-  --file "./$ARCHIVE" \
+  --file "$ARCHIVE" \
   component-constructor.yaml
 echo "Built: $ARCHIVE"
 echo
