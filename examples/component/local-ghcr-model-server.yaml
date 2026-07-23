@@ -1,0 +1,34 @@
+server:
+  listen: ":8080"
+  readTimeout: 30s
+  writeTimeout: 0s
+  idleTimeout: 120s
+  shutdownTimeout: 30s
+
+auth:
+  mode: none
+
+ocm:
+  repositories:
+    - name: ghcr-transport-cache-repo
+      type: CTF
+      url: "/Users/D067928/SAPDevelop/model-server/examples/component/ghcr-transport-cache"
+  blobCache:
+    path: "/Users/D067928/SAPDevelop/model-server/examples/component/local-cache"
+    maxSizeBytes: 10737418240
+    ttl: 168h
+  signatures:
+    required: false
+    trustedKeys: []
+  refreshInterval: 1m
+  indexTTL: 10s
+
+apis:
+  hfhub:
+    enabled: true
+  ollama:
+    enabled: true
+  openai:
+    enabled: true
+  mlflow:
+    enabled: true

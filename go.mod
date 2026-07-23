@@ -14,6 +14,7 @@ require (
 	ocm.software/open-component-model/bindings/go/oci v0.0.43
 	ocm.software/open-component-model/bindings/go/repository v0.0.9
 	ocm.software/open-component-model/bindings/go/runtime v0.0.8
+	oras.land/oras-go/v2 v2.6.0
 	sigs.k8s.io/yaml v1.6.0
 )
 
@@ -46,7 +47,8 @@ require (
 	golang.org/x/text v0.36.0 // indirect
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	oras.land/oras-go/v2 v2.6.0 // indirect
 )
 
 replace github.com/ThalesIgnite/crypto11 => github.com/ThalesGroup/crypto11 v1.2.4
+
+replace ocm.software/open-component-model/bindings/go/oci => /Users/D067928/SAPDevelop/open-component-model/bindings/go/oci

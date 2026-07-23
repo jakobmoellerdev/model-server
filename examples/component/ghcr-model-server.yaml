@@ -1,0 +1,40 @@
+server:
+  listen: ":8080"
+  readTimeout: 30s
+  writeTimeout: 0s
+  idleTimeout: 120s
+  shutdownTimeout: 30s
+
+auth:
+  mode: none
+
+ocm:
+  repositories:
+    - name: ghcr-models
+      type: OCIRegistry
+      url: "ghcr.io/jakobmoellerdev/model-server/models"
+      credentialsRef: ghcr-creds
+  blobCache:
+    path: "/tmp/model-server-ghcr-cache"
+    maxSizeBytes: 10737418240
+    ttl: 168h
+  signatures:
+    required: false
+    trustedKeys: []
+  refreshInterval: 1m
+  indexTTL: 10s
+
+apis:
+  hfhub:
+    enabled: true
+  ollama:
+    enabled: true
+  openai:
+    enabled: true
+  mlflow:
+    enabled: true
+
+credentials:
+  ghcr-creds:
+    username: ${GHCR_USERNAME}
+    password: ${GHCR_TOKEN}

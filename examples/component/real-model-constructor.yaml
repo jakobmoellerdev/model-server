@@ -1,0 +1,99 @@
+components:
+  - name: example.org/tiny-llm
+    version: 1.0.0
+    provider:
+      name: arnir0
+    labels:
+      - name: ext.ocm.software/model-server.model-id
+        value: "arnir0/Tiny-LLM"
+      - name: ext.ocm.software/model-server.task
+        value: "text-generation"
+      - name: ext.ocm.software/model-server.library
+        value: "transformers"
+      - name: ext.ocm.software/model-server.license
+        value: "mit"
+    resources:
+      - name: readmemd
+        type: modelCard
+        relation: local
+        input:
+          type: file
+          path: Tiny-LLM/README.md
+          mediaType: application/octet-stream
+        labels:
+          - name: ext.ocm.software/model-server.filename
+            value: "README.md"
+          - name: ext.ocm.software/model-server.format
+            value: "markdown"
+      - name: configjson
+        type: modelConfig
+        relation: local
+        input:
+          type: file
+          path: Tiny-LLM/config.json
+          mediaType: application/json
+        labels:
+          - name: ext.ocm.software/model-server.filename
+            value: "config.json"
+          - name: ext.ocm.software/model-server.format
+            value: "json"
+      - name: modelsafetensors
+        type: modelWeights
+        relation: local
+        input:
+          type: file
+          path: Tiny-LLM/model.safetensors
+          mediaType: application/octet-stream
+        labels:
+          - name: ext.ocm.software/model-server.filename
+            value: "model.safetensors"
+          - name: ext.ocm.software/model-server.format
+            value: "safetensors"
+      - name: specialtokensmapjson
+        type: tokenizer
+        relation: local
+        input:
+          type: file
+          path: Tiny-LLM/special_tokens_map.json
+          mediaType: application/json
+        labels:
+          - name: ext.ocm.software/model-server.filename
+            value: "special_tokens_map.json"
+          - name: ext.ocm.software/model-server.format
+            value: "json"
+      - name: tokenizerjson
+        type: tokenizer
+        relation: local
+        input:
+          type: file
+          path: Tiny-LLM/tokenizer.json
+          mediaType: application/json
+        labels:
+          - name: ext.ocm.software/model-server.filename
+            value: "tokenizer.json"
+          - name: ext.ocm.software/model-server.format
+            value: "json"
+      - name: tokenizermodel
+        type: tokenizer
+        relation: local
+        input:
+          type: file
+          path: Tiny-LLM/tokenizer.model
+          mediaType: application/octet-stream
+        labels:
+          - name: ext.ocm.software/model-server.filename
+            value: "tokenizer.model"
+          - name: ext.ocm.software/model-server.format
+            value: "bin"
+      - name: tokenizerconfigjson
+        type: tokenizer
+        relation: local
+        input:
+          type: file
+          path: Tiny-LLM/tokenizer_config.json
+          mediaType: application/json
+        labels:
+          - name: ext.ocm.software/model-server.filename
+            value: "tokenizer_config.json"
+          - name: ext.ocm.software/model-server.format
+            value: "json"

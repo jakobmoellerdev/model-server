@@ -3,3 +3,12 @@ coverage.out
 *.test
 transport-archive/
 __pycache__
+
+# Generated artifacts
+model-server
+model-server-*.log
+venv/
+examples/component/local-cache/
+examples/component/temp_docker_config/
+/tmp/model-server-*
+.idea/
