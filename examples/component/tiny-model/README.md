@@ -20,7 +20,7 @@ Use this component to:
 ## OCM Component
 
 ```
-name:     github.com/jakobmoellerdev/model-server/models/tiny-model
+name:     example-org/tiny-model
 version:  1.0.0
 registry: ghcr.io/jakobmoellerdev/model-server/models
 model-id: example-org/tiny-model

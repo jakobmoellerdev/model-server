@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TARGET: ghcr.io/${{ github.repository_owner }}/model-server/models
-      COMPONENT: github.com/jakobmoellerdev/model-server/models/tiny-model
+      COMPONENT: example-org/tiny-model
       COMPONENT_VERSION: "1.0.0"
       OCM_VERSION: "0.42.0"
 
