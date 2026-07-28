@@ -20,15 +20,20 @@ type OCMRegistry struct {
 	log      *slog.Logger
 	indexTTL time.Duration
 	ready    bool
+
+	// descCache caches ModelDescriptor by "modelID:version"
+	descCacheMu sync.RWMutex
+	descCache   map[string]*ModelDescriptor
 }
 
 // NewOCMRegistry creates a registry and builds the initial model index.
 func NewOCMRegistry(client *ocmclient.Client, indexTTL time.Duration, log *slog.Logger) (*OCMRegistry, error) {
 	r := &OCMRegistry{
-		client:   client,
-		idx:      newIndex(),
-		log:      log,
-		indexTTL: indexTTL,
+		client:    client,
+		idx:       newIndex(),
+		log:       log,
+		indexTTL:  indexTTL,
+		descCache: make(map[string]*ModelDescriptor),
 	}
 	if err := r.buildIndex(context.Background()); err != nil {
 		return nil, fmt.Errorf("initial index build: %w", err)
@@ -47,6 +52,15 @@ func (r *OCMRegistry) Search(_ context.Context, f SearchFilter) ([]ModelDescript
 }
 
 func (r *OCMRegistry) Describe(ctx context.Context, modelID, version string) (*ModelDescriptor, error) {
+	// Check descriptor cache first
+	cacheKey := modelID + ":" + version
+	r.descCacheMu.RLock()
+	if cached, ok := r.descCache[cacheKey]; ok {
+		r.descCacheMu.RUnlock()
+		return cached, nil
+	}
+	r.descCacheMu.RUnlock()
+
 	compName, err := r.resolveComponent(modelID)
 	if err != nil {
 		return nil, err
@@ -61,6 +75,12 @@ func (r *OCMRegistry) Describe(ctx context.Context, modelID, version string) (*M
 		return nil, err
 	}
 	d := infoToDescriptor(info)
+
+	// Cache the result
+	r.descCacheMu.Lock()
+	r.descCache[cacheKey] = &d
+	r.descCacheMu.Unlock()
+
 	return &d, nil
 }
 
@@ -81,7 +101,7 @@ func (r *OCMRegistry) OpenFile(_ context.Context, modelID, revision, path string
 	if err != nil {
 		return nil, 0, fmt.Errorf("lookup version: %w", err)
 	}
-	return ocmclient.OpenResource(cv, path)
+	return r.client.GetCachedResource(context.Background(), cv, path)
 }
 
 func (r *OCMRegistry) Refresh(ctx context.Context) error {
