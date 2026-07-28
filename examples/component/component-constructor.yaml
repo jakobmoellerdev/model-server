@@ -1,8 +1,8 @@
 components:
-  - name: github.com/jakobmoellerdev/model-server/models/tiny-model
+  - name: example-org/tiny-model
     version: 1.0.0
     provider:
-      name: jakobmoellerdev
+      name: example-org
     labels:
       - name: ext.ocm.software/model-server.model-id
         value: "example-org/tiny-model"
