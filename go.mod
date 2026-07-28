@@ -51,4 +51,4 @@ require (
 
 replace github.com/ThalesIgnite/crypto11 => github.com/ThalesGroup/crypto11 v1.2.4
 
-replace ocm.software/open-component-model/bindings/go/oci => ../open-component-model/bindings/go/oci
+replace ocm.software/open-component-model/bindings/go/oci => ./ocm-oci-vendor

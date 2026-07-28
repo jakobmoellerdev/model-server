@@ -18,6 +18,7 @@ import (
 func MountRoutes(r chi.Router, reg registry.ModelRegistry) {
 	// Model discovery
 	r.Get("/api/models", listModels(reg))
+	r.Get("/api/models/{owner}/{model}/revision/{revision}", modelInfoOwnerRevision(reg))
 	r.Get("/api/models/{owner}/{model}/tree/{revision}", fileTree(reg))
 	r.Get("/api/models/{owner}/{model}", modelInfoOwner(reg))
 	r.Get("/api/models/{model}", modelInfoSingle(reg))
@@ -70,6 +71,19 @@ func modelInfoOwner(reg registry.ModelRegistry) http.HandlerFunc {
 func modelInfoSingle(reg registry.ModelRegistry) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		serveModelInfo(w, r, reg, chi.URLParam(r, "model"))
+	}
+}
+
+func modelInfoOwnerRevision(reg registry.ModelRegistry) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		modelID := chi.URLParam(r, "owner") + "/" + chi.URLParam(r, "model")
+		revision := chi.URLParam(r, "revision")
+		desc, err := reg.Describe(r.Context(), modelID, revision)
+		if err != nil {
+			jsonError(w, statusFor(err), err)
+			return
+		}
+		jsonOK(w, toModelInfo(*desc))
 	}
 }
 
