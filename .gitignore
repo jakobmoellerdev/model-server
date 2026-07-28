@@ -3,4 +3,3 @@ coverage.out
 *.test
 transport-archive/
 __pycache__
-ocm-oci-vendor/

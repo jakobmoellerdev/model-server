@@ -1,7 +1,6 @@
 FROM golang:1.26-alpine AS builder
 WORKDIR /src
 COPY go.mod go.sum ./
-COPY ocm-oci-vendor/ ./ocm-oci-vendor/
 RUN go mod download
 COPY . .
 ARG VERSION=dev
