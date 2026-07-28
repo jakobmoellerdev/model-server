@@ -18,6 +18,7 @@ func (t hfTime) MarshalJSON() ([]byte, error) {
 type ModelInfo struct {
 	ID           string    `json:"id"`
 	ModelID      string    `json:"modelId"`
+	Sha          string    `json:"sha,omitempty"`
 	Author       string    `json:"author,omitempty"`
 	LastModified hfTime    `json:"lastModified"`
 	Private      bool      `json:"private"`
@@ -82,7 +83,7 @@ func toModelInfo(d registry.ModelDescriptor) ModelInfo {
 	}
 
 	return ModelInfo{
-		ID: d.ID, ModelID: d.ID, Author: author,
+		ID: d.ID, ModelID: d.ID, Sha: d.Version, Author: author,
 		LastModified: hfTime{d.ModifiedAt}, Private: d.Private, Gated: d.Gated,
 		Tags: tags, PipelineTag: d.Task, LibraryName: d.Library,
 		CardData: &CardData{License: d.License},
